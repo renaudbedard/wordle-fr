@@ -1,2 +1,4 @@
 # wordle-fr
-Wordle, mais en français
+
+Un clone de Wordle, mais en français.
+Bâti avec SvelteKit.
