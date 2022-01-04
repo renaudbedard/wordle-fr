@@ -1,10 +1,57 @@
+<script context="module">
+  export async function load({ params, fetch, session, stuff }) {
+    const response = await fetch('../mots-francais-5-lettres.json');
+    return {
+      props: {
+        allWords: await response.json()
+      }
+    };
+  }
+</script>
+
 <script>
   import { each } from "svelte/internal";
+  import { fade } from 'svelte/transition';
 
-  var rows = [
-    [ 'a', 'b', 'c', 'd', 'e' ],
-    [ 'f', 'g', 'h', 'i', 'j' ]
-  ]
+  var rows = []
+
+  let letterCursor = 0;
+  let inputLetters = ['', '', '', '', '']
+  let inError = false;
+  let lastErrorTimer;
+  export let allWords;
+
+  function handleKeydown(event) {
+    if (event.ctrlKey)
+      return;
+
+    if ((event.key == 'Backspace' || event.key == 'Delete') && letterCursor > 0) {
+      letterCursor--;
+      inputLetters[letterCursor] = '';
+      return;
+    }
+
+    if (letterCursor == 5 && (event.key == 'Enter' || event.key == 'NumpadEnter')) {
+      const inputWord = inputLetters.join("").toUpperCase();
+      if (!allWords.includes(inputWord)) {
+        inError = true;
+        if (lastErrorTimer) {
+          clearTimeout(lastErrorTimer);
+        }
+        lastErrorTimer = setTimeout(async () => { inError = false; }, 1000)
+        return;
+      }
+      rows = [...rows, inputLetters]
+      inputLetters = ['', '', '', '', ''];
+      letterCursor = 0;
+    }
+
+    if (letterCursor == 5 || !RegExp(/^\p{L}{1}$/,'u').test(event.key))
+      return;
+
+      inputLetters[letterCursor] = event.key;
+    letterCursor++;
+  }
 </script>
 
 <style>
@@ -51,6 +98,8 @@
   
 </style>
 
+<svelte:window on:keydown={handleKeydown}/>
+
 <header>
   <h1>WORDLE 🇫🇷</h1>
 </header>
@@ -66,5 +115,19 @@
         {/each}
       </row>
     {/each}
+
+    <row>
+      {#each inputLetters as letter}
+        <letter-box>
+          <letter>{letter}</letter>
+        </letter-box>
+      {/each}
+    </row>
   </rows>
+
+  {#if inError}
+    <error-box out:fade>
+      Ce mot n'est pas reconnu!
+    </error-box>
+  {/if}
 </game-board>
