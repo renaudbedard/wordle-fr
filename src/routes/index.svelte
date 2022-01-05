@@ -78,7 +78,6 @@
 			}
 
 			let newRow = [];
-			console.log(`testing ${inputWord} against ${randomWord}...`)
 			for (let i=0; i<5; i++) {
 				var inputLetter = inputLetters[i].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 				let rowLetter = { glyph: inputLetters[i] };
