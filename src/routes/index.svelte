@@ -23,8 +23,6 @@
 		const response = await fetch('../mots-francais-5-lettres.json');
 		let allWords = await response.json();
 
-		allWords = allWords.map(x => x.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-
 		var today = new Date();
 		var dateString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
 		var seed = xmur3(dateString);
@@ -33,7 +31,7 @@
 		const randomWord = allWords[Math.floor(rand() * allWords.length)];
 		return {
 			props: {
-				allWords: allWords,
+				allUpperCaseWords: allWords.map(x => x.toUpperCase()),
 				randomWord: randomWord
 			}
 		};
@@ -44,7 +42,7 @@
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
 
-	export let allWords;
+	export let allUpperCaseWords;
 	export let randomWord;
 
 	var rows = [];
@@ -54,19 +52,36 @@
 	let inError = false;
 	let lastErrorTimer;
 
+	let glyphRows = [
+		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '^', '¨' ],
+		[ 'A', 'S', 'D', 'F', 'G',' H', 'J', 'K', 'L', '`' ],
+		[ 'Enter', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', 'Backspace' ]
+	];
+
+	let keyRows = glyphRows.map(r => r.map(k => {
+		return { glyph: k, class: null };
+	}));
+
 	function handleKeydown(event) {
 		if (event.ctrlKey) return;
+		handleKey(event.key);
+	}
 
-		if ((event.key == 'Backspace' || event.key == 'Delete') && letterCursor > 0) {
+	function handleClick(evt) {
+		handleKey(evt.target.id.substring(4)); // skip "key_" prefix
+	}
+
+	function handleKey(key) {
+		if ((key == 'Backspace' || key == 'Delete') && letterCursor > 0) {
 			letterCursor--;
 			inputLetters[letterCursor] = '';
 			return;
 		}
 
-		if (letterCursor == 5 && (event.key == 'Enter' || event.key == 'NumpadEnter')) {
-			const inputWord = inputLetters.join('').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+		if (letterCursor == 5 && (key == 'Enter' || key == 'NumpadEnter')) {
+			const inputUpperCaseWord = inputLetters.join('').toUpperCase();
 
-			if (!allWords.includes(inputWord)) {
+			if (!allUpperCaseWords.includes(inputUpperCaseWord)) {
 				inError = true;
 				if (lastErrorTimer) {
 					clearTimeout(lastErrorTimer);
@@ -77,28 +92,37 @@
 				return;
 			}
 
-			let newRow = [];
+			let mutatedRow = [];
+			const normalizedRandomWord = randomWord.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
 			for (let i=0; i<5; i++) {
-				var inputLetter = inputLetters[i].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+				var normalizedInputLetter = inputUpperCaseWord[i].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 				let rowLetter = { glyph: inputLetters[i] };
-				if (inputLetter == randomWord[i]) {
+				if (normalizedInputLetter == normalizedRandomWord[i]) {
 					rowLetter.class = 'in-place';
-				} else if (randomWord.includes(inputLetter)) {
+					rowLetter.glyph = randomWord[i];
+				} else if (normalizedRandomWord.includes(normalizedInputLetter)) {
 					rowLetter.class = 'in-word';
 				} else {
 					rowLetter.class = 'not-in-word';
+
+					keyRows = keyRows.map(r => r.map(k => {
+						if (k.glyph == normalizedInputLetter)
+							k.class = 'not-in-word';
+						return k;
+					}))
 				}
-				newRow.push(rowLetter);
+				mutatedRow.push(rowLetter);
 			}
 
-			rows = [...rows, newRow];
+			rows = [...rows, mutatedRow];
 			inputLetters = ['', '', '', '', ''];
 			letterCursor = 0;
 		}
 
-		if (letterCursor == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(event.key)) return;
+		if (letterCursor == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
 
-		inputLetters[letterCursor] = event.key;
+		inputLetters[letterCursor] = key;
 		letterCursor++;
 	}
 </script>
@@ -135,6 +159,16 @@
 	{/if}
 </game-board>
 
+<keyboard>
+	{#each keyRows as row}
+		<row>
+			{#each row as key}
+				<button class={key.class} id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+			{/each}
+		</row>
+	{/each}
+</keyboard>	
+
 <style>
 	:root {
 		background-color: black;
@@ -143,8 +177,8 @@
 	}
 
 	header,
-	game-board {
-		/* "Gentle Flex" (https://web.dev/centering-in-css/) */
+	game-board,
+	keyboard {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -152,12 +186,37 @@
 		gap: 1ch;
 	}
 
-	rows {
+	keyboard {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		margin-bottom: 1em;
+	}
+
+	keyboard row {
+		display: flex;
+		gap: 5px;
+	}
+
+	button {
+		display: grid;
+		justify-items: center;
+		align-items: center;
+		background-color: #333333;
+		/* width: 3ch; */
+		height: 5ch;
+		font-size: 1em;
+		text-transform: capitalize;
+		color: white;
+	}
+
+	game-board rows {
 		display: grid;
 		gap: 5px;
 	}
 
-	row {
+	game-board row {
 		display: grid;
 		grid-template-columns: repeat(5, 1fr);
 		gap: 5px;
