@@ -1,4 +1,7 @@
 <script context="module">
+	/**
+* @param {string} str
+*/
 	function xmur3(str) {
 			for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
 					h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
@@ -10,6 +13,9 @@
 			}
 	}
 
+	/**
+* @param {number} a
+*/
 	function mulberry32(a) {
 			return function() {
 				var t = a += 0x6D2B79F5;
@@ -62,15 +68,33 @@
 		return { glyph: k, class: null };
 	}));
 
+	/**
+	* @param {KeyboardEvent} event
+	*/
 	function handleKeydown(event) {
 		if (event.ctrlKey) return;
 		handleKey(event.key);
 	}
 
+	/**
+	* @param {MouseEvent} evt
+	*/
 	function handleClick(evt) {
-		handleKey(evt.target.id.substring(4)); // skip "key_" prefix
+		if (evt.target instanceof Element) {
+			handleKey(evt.target.id.substring(4)); // skip "key_" prefix
+		}
 	}
 
+	/**
+	* @param {string} string
+	*/
+	function neutralizeAccents(string) {
+		return string.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+	}
+
+	/**
+	* @param {string} key
+	*/
 	function handleKey(key) {
 		if ((key == 'Backspace' || key == 'Delete') && letterCursor > 0) {
 			letterCursor--;
@@ -92,32 +116,59 @@
 				return;
 			}
 
-			let mutatedRow = [];
-			const normalizedRandomWord = randomWord.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+			const mutatedRow = Array(5);
+			const toCheck = [];
+			const normalizedRandomWord = neutralizeAccents(randomWord.toUpperCase());
+			const normalizedRandomWordLetters = [...normalizedRandomWord];
 
+			// take care of matches first
 			for (let i=0; i<5; i++) {
-				var normalizedInputLetter = inputUpperCaseWord[i].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-				let rowLetter = { glyph: inputLetters[i] };
+				const normalizedInputLetter = neutralizeAccents(inputUpperCaseWord[i]);
+				const rowLetter = { glyph: inputLetters[i] };
 				if (normalizedInputLetter == normalizedRandomWord[i]) {
 					rowLetter.class = 'in-place';
 					rowLetter.glyph = randomWord[i];
-				} else if (normalizedRandomWord.includes(normalizedInputLetter)) {
-					rowLetter.class = 'in-word';
+					normalizedRandomWordLetters[i] = '\0';
+					mutatedRow[i] = rowLetter;
 				} else {
-					rowLetter.class = 'not-in-word';
-
-					keyRows = keyRows.map(r => r.map(k => {
-						if (k.glyph == normalizedInputLetter)
-							k.class = 'not-in-word';
-						return k;
-					}))
+					toCheck.push(i);
 				}
-				mutatedRow.push(rowLetter);
 			}
 
+			// then the rest
+			for (const i of toCheck) {
+				const normalizedInputLetter = neutralizeAccents(inputUpperCaseWord[i]);
+				const rowLetter = { glyph: inputLetters[i] };
+				if (normalizedRandomWordLetters.includes(normalizedInputLetter)) {
+					rowLetter.class = 'in-word';
+					for (let i = 0; i < 5; i++) {
+						if (normalizedRandomWordLetters[i] == normalizedInputLetter) {
+							rowLetter.glyph = randomWord[i];
+							normalizedRandomWordLetters[i] = '\0';
+							break;
+						}
+					}
+				} else {
+					rowLetter.class = 'not-in-word';
+				}
+				mutatedRow[i] = rowLetter;
+			}
+
+			keyRows = keyRows.map(r => r.map(k => {
+					if (inputUpperCaseWord.includes(k.glyph) && !randomWord.toUpperCase().includes(k.glyph)) {
+						k.class = 'not-in-word';
+					}
+					return k;
+				}));
+
 			rows = [...rows, mutatedRow];
-			inputLetters = ['', '', '', '', ''];
-			letterCursor = 0;
+
+			if (toCheck.length > 0) {
+				inputLetters = ['', '', '', '', ''];
+				letterCursor = 0;
+			} else {
+				inputLetters = [];
+			}
 		}
 
 		if (letterCursor == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
