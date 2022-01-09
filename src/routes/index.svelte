@@ -1,7 +1,7 @@
 <script context="module">
 	/**
-* @param {string} str
-*/
+	* @param {string} str
+	*/
 	function xmur3(str) {
 			for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
 					h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
@@ -14,8 +14,8 @@
 	}
 
 	/**
-* @param {number} a
-*/
+	* @param {number} a
+	*/
 	function mulberry32(a) {
 			return function() {
 				var t = a += 0x6D2B79F5;
@@ -47,14 +47,21 @@
 <script>
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
+	import { rowState, inputState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
 
-	var rows = [];
-
+	let rows = [];
 	let letterCursor = 0;
-	let inputLetters = Array(5).fill('');
+	let inputLetters = [];
+
+	rowState.subscribe(value => rows = value);
+	inputState.subscribe(value => {
+		inputLetters = value;
+		letterCursor = inputLetters.indexOf('');
+	});
+
 	let inError = false;
 	let lastErrorTimer;
 
@@ -96,13 +103,21 @@
 	* @param {string} key
 	*/
 	function handleKey(key) {
-		if ((key == 'Backspace' || key == 'Delete') && letterCursor > 0) {
-			letterCursor--;
-			inputLetters[letterCursor] = '';
+		// DEBUG
+		if (key == 'Escape') {
+			window.localStorage.clear();
+			window.location.reload();
 			return;
 		}
 
-		if (letterCursor == 5 && (key == 'Enter' || key == 'NumpadEnter')) {
+		if ((key == 'Backspace' || key == 'Delete') && letterCursor != 0) {
+			if (letterCursor == -1) letterCursor = 4; else letterCursor = letterCursor - 1;
+			inputLetters[letterCursor] = '';
+			inputState.update(_ => inputLetters);
+			return;
+		}
+
+		if (letterCursor == -1 && (key == 'Enter' || key == 'NumpadEnter')) {
 			const inputUpperCaseWord = inputLetters.join('').toUpperCase();
 
 			if (!allUpperCaseWords.includes(inputUpperCaseWord)) {
@@ -163,18 +178,20 @@
 
 			rows = [...rows, mutatedRow];
 
-			if (toCheck.length > 0) {
+			if (toCheck.length > 0) 
 				inputLetters = ['', '', '', '', ''];
-				letterCursor = 0;
-			} else {
+			else
 				inputLetters = [];
-			}
+
+			rowState.update(_ => rows);
+			inputState.update(_ => inputLetters);
+			return;
 		}
 
-		if (letterCursor == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
+		if (letterCursor == -1 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
 
 		inputLetters[letterCursor] = key;
-		letterCursor++;
+		inputState.update(_ => inputLetters);
 	}
 </script>
 
