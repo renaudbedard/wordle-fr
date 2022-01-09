@@ -68,7 +68,7 @@
 	let glyphRows = [
 		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '^', '¨' ],
 		[ 'A', 'S', 'D', 'F', 'G',' H', 'J', 'K', 'L', '`' ],
-		[ 'Enter', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', 'Backspace' ]
+		[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
 	];
 
 	let keyRows = glyphRows.map(r => r.map(k => {
@@ -110,14 +110,14 @@
 			return;
 		}
 
-		if ((key == 'Backspace' || key == 'Delete') && letterCursor != 0) {
+		if ((key == 'Backspace' || key == 'Delete' || key == '\u232b') && letterCursor != 0) {
 			if (letterCursor == -1) letterCursor = 4; else letterCursor = letterCursor - 1;
 			inputLetters[letterCursor] = '';
 			inputState.update(_ => inputLetters);
 			return;
 		}
 
-		if (letterCursor == -1 && (key == 'Enter' || key == 'NumpadEnter')) {
+		if (letterCursor == -1 && (key == 'Enter' || key == 'NumpadEnter' || key == '\u23ce')) {
 			const inputUpperCaseWord = inputLetters.join('').toUpperCase();
 
 			if (!allUpperCaseWords.includes(inputUpperCaseWord)) {
@@ -231,7 +231,7 @@
 	{#each keyRows as row}
 		<row>
 			{#each row as key}
-				<button class={key.class} id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+				<button class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
 			{/each}
 		</row>
 	{/each}
@@ -264,7 +264,7 @@
 
 	keyboard row {
 		display: flex;
-		gap: 5px;
+		gap: min(0.75vw, 0.75ch);
 	}
 
 	button {
@@ -272,12 +272,25 @@
 		justify-items: center;
 		align-items: center;
 		background-color: #333333;
-		/* width: 3ch; */
-		height: 5ch;
-		font-size: 1em;
+		height: min(9vw, 4ch);
+		font-size: min(4vw, 2.5ch);
+		border-radius: 2px;
+		padding: min(2vw, 0.75ch);
+		border: 1px solid #666666;
 		text-transform: capitalize;
+		transition-duration: 0.05s;
 		color: white;
 	}
+
+	button:hover {
+		background-color: #555555; 
+		color: white;
+	}
+
+	button:active {
+		background-color: #000000;
+		color: #bbbbbb;
+	}	
 
 	game-board rows {
 		display: grid;
@@ -295,8 +308,8 @@
 		justify-items: center;
 		align-items: center;
 		background-color: #333333;
-		width: 7ch;
-		height: 7ch;
+		width: min(15vw, 7ch);
+		height: min(15vw, 7ch);
 	}
 
 	letter {
