@@ -56,15 +56,24 @@
 	let letterCursor = 0;
 	let inputLetters = [];
 	let disabledLetters = new Set();
+	let combiningBuffer = '';
 
 	let inError = false;
 	let lastErrorTimer;
 
-	let glyphRows = [
-		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '^', '¨' ],
-		[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '`' ],
+	const glyphRows = [
+		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
+		[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300' ],
 		[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
 	];
+
+	const possibleCombinations = {
+		'\u0302': ['A', 'E', 'I', 'O', 'U'],
+		'\u0308': ['E', 'I', 'U'],
+		'\u0300': ['A', 'E', 'U']
+	};
+
+	const controlKeys = ['\u23ce', '\u232b'];
 
 	let keyRows = glyphRows.map(r => r.map(k => {
 		return { glyph: k, class: null };
@@ -93,7 +102,7 @@
 	* @param {KeyboardEvent} event
 	*/
 	function handleKeydown(event) {
-		if (event.ctrlKey) return;
+		if (event.ctrlKey || event.metaKey) return;
 		handleKey(event.key);
 	}
 
@@ -121,6 +130,15 @@
 		if (key == 'Escape') {
 			window.localStorage.clear();
 			window.location.reload();
+			return;
+		}
+
+		// Combinations
+		if (key == '\u0302' || key == '\u0300' || key == '\u0308') {
+			if (combiningBuffer.length > 0)
+				combiningBuffer = '';
+			else
+				combiningBuffer = key;
 			return;
 		}
 
@@ -201,7 +219,7 @@
 			rows = [...rows, mutatedRow];
 
 			if (toCheck.length > 0 && rows.length < 6) 
-				inputLetters = ['', '', '', '', ''];
+				inputLetters = Array(5).fill('');
 			else
 				inputLetters = [];
 
@@ -211,7 +229,13 @@
 			return;
 		}
 
-		if (letterCursor == -1 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
+		if (letterCursor == -1 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) 
+			return;
+
+		if (combiningBuffer.length > 0) {
+			key = `${key}${combiningBuffer}`.normalize();
+			combiningBuffer = '';
+		}
 
 		inputLetters[letterCursor] = key;
 		inputState.set(inputLetters);
@@ -246,7 +270,7 @@
 	</rows>
 
 	{#if inError}
-		<error-box out:fade> Ce mot n'est pas reconnu!</error-box>
+		<error-box out:fade>Ce mot n'est pas reconnu!</error-box>
 	{/if}
 </game-board>
 
@@ -254,7 +278,7 @@
 	{#each keyRows as row}
 		<row>
 			{#each row as key}
-				<button class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+				<button disabled={key.class == 'not-in-word' || (combiningBuffer.length > 0 && !possibleCombinations[combiningBuffer].includes(key.glyph) && !controlKeys.includes(key.glyph) && key.glyph != combiningBuffer)} class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
 			{/each}
 		</row>
 	{/each}
@@ -352,7 +376,7 @@
 		color: #333333;
 	}
 
-	.not-in-word, button.not-in-word:hover {
+	.not-in-word, button.not-in-word:hover, button:disabled {
 		background-color: #111111;
 		color: #333333;
 	}
