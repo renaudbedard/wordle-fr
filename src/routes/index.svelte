@@ -62,7 +62,7 @@
 
 	let glyphRows = [
 		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '^', '¨' ],
-		[ 'A', 'S', 'D', 'F', 'G',' H', 'J', 'K', 'L', '`' ],
+		[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '`' ],
 		[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
 	];
 
@@ -81,7 +81,6 @@
 			return;
 		for (const letter of value)
 			disabledLetters.add(letter);
-		console.log(value);
 		keyRows = keyRows.map(r => r.map(k => {
 			if (disabledLetters.has(k.glyph.toUpperCase())) {
 				k.class = 'not-in-word';
@@ -148,7 +147,8 @@
 
 			const mutatedRow = Array(5);
 			const toCheck = [];
-			const normalizedRandomWord = neutralizeAccents(randomWord.toUpperCase());
+			const upperCaseRandomWord = randomWord.toUpperCase();
+			const normalizedRandomWord = neutralizeAccents(upperCaseRandomWord);
 			const normalizedRandomWordLetters = [...normalizedRandomWord];
 
 			// take care of matches first
@@ -171,6 +171,11 @@
 				const rowLetter = { glyph: inputLetters[i] };
 				if (normalizedRandomWordLetters.includes(normalizedInputLetter)) {
 					rowLetter.class = 'in-word';
+					if (!upperCaseRandomWord.includes(inputUpperCaseWord[i])) {
+						disabledLetters.add(inputUpperCaseWord[i]);
+					} else if (!upperCaseRandomWord.includes(normalizedInputLetter[i])) {
+						disabledLetters.add(normalizedInputLetter[i]);
+					}					
 					for (let i = 0; i < 5; i++) {
 						if (normalizedRandomWordLetters[i] == normalizedInputLetter) {
 							rowLetter.glyph = randomWord[i];
@@ -179,7 +184,11 @@
 						}
 					}
 				} else {
-					disabledLetters.add(inputUpperCaseWord[i]);
+					if (!upperCaseRandomWord.includes(inputUpperCaseWord[i])) {
+						disabledLetters.add(inputUpperCaseWord[i]);
+					} else if (!upperCaseRandomWord.includes(normalizedInputLetter[i])) {
+						disabledLetters.add(normalizedInputLetter[i]);
+					}
 					rowLetter.class = 'not-in-word';
 				}
 				mutatedRow[i] = rowLetter;
