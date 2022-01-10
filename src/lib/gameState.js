@@ -4,19 +4,18 @@ import { writable } from 'svelte/store';
 let storedDate;
 if (browser) {
   const storedDateString = localStorage.getItem('lastPlayedDate');
-  if (storedDateString) {
-    storedDate = new Date(storedDateString);
+  storedDate = new Date(storedDateString);
 
-    const today = new Date();
-    var todayString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
-		var lastPlayedString = '' + storedDate.getUTCFullYear() + storedDate.getUTCMonth() + storedDate.getUTCDate();
-		if (todayString != lastPlayedString) {
-      console.log('A new day!');
-      storedDate = today;
-      window.localStorage.setItem('lastPlayedDate', storedDate.toISOString());
-			window.localStorage.setItem('inputState', null);
-      window.localStorage.setItem('rowState', null);
-		}
+  const today = new Date();
+  var todayString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
+  var lastPlayedString = '' + storedDate.getUTCFullYear() + storedDate.getUTCMonth() + storedDate.getUTCDate();
+  if (todayString != lastPlayedString) {
+    console.log('A new day!');
+    storedDate = today;
+    window.localStorage.setItem('lastPlayedDate', storedDate.toISOString());
+    window.localStorage.setItem('inputState', null);
+    window.localStorage.setItem('rowState', null);
+    window.localStorage.setItem('disabledKeysState', null);
   }
 }
  
@@ -28,3 +27,6 @@ inputState.subscribe((value) => { if (browser) localStorage.setItem('inputState'
 
 export const rowState = writable(browser ? JSON.parse(localStorage.getItem('rowState')) ?? [] : []);
 rowState.subscribe((value) => { if (browser) localStorage.setItem('rowState', JSON.stringify(value))});
+
+export const disabledKeysState = writable(browser ? JSON.parse(localStorage.getItem('disabledKeysState')) ?? [] : []);
+disabledKeysState.subscribe((value) => { if (browser) localStorage.setItem('disabledKeysState', JSON.stringify(value))});

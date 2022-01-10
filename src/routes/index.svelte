@@ -47,7 +47,7 @@
 <script>
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
-	import { rowState, inputState } from '$lib/gameState';
+	import { rowState, inputState, disabledKeysState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
@@ -55,12 +55,7 @@
 	let rows = [];
 	let letterCursor = 0;
 	let inputLetters = [];
-
-	rowState.subscribe(value => rows = value);
-	inputState.subscribe(value => {
-		inputLetters = value;
-		letterCursor = inputLetters.indexOf('');
-	});
+	let disabledLetters = new Set();
 
 	let inError = false;
 	let lastErrorTimer;
@@ -74,6 +69,26 @@
 	let keyRows = glyphRows.map(r => r.map(k => {
 		return { glyph: k, class: null };
 	}));
+
+	rowState.subscribe(value => rows = value);
+	inputState.subscribe(value => {
+		inputLetters = value;
+		letterCursor = inputLetters.indexOf('');
+	});
+	disabledKeysState.subscribe(value => {
+		disabledLetters.clear();
+		if (value == null || !(typeof value[Symbol.iterator] === 'function'))
+			return;
+		for (const letter of value)
+			disabledLetters.add(letter);
+		console.log(value);
+		keyRows = keyRows.map(r => r.map(k => {
+			if (disabledLetters.has(k.glyph.toUpperCase())) {
+				k.class = 'not-in-word';
+			}
+			return k;
+		}));
+	});	
 
 	/**
 	* @param {KeyboardEvent} event
@@ -113,7 +128,7 @@
 		if ((key == 'Backspace' || key == 'Delete' || key == '\u232b') && letterCursor != 0) {
 			if (letterCursor == -1) letterCursor = 4; else letterCursor = letterCursor - 1;
 			inputLetters[letterCursor] = '';
-			inputState.update(_ => inputLetters);
+			inputState.set(inputLetters);
 			return;
 		}
 
@@ -164,17 +179,11 @@
 						}
 					}
 				} else {
+					disabledLetters.add(inputUpperCaseWord[i]);
 					rowLetter.class = 'not-in-word';
 				}
 				mutatedRow[i] = rowLetter;
 			}
-
-			keyRows = keyRows.map(r => r.map(k => {
-					if (inputUpperCaseWord.includes(k.glyph) && !randomWord.toUpperCase().includes(k.glyph)) {
-						k.class = 'not-in-word';
-					}
-					return k;
-				}));
 
 			rows = [...rows, mutatedRow];
 
@@ -183,15 +192,16 @@
 			else
 				inputLetters = [];
 
-			rowState.update(_ => rows);
-			inputState.update(_ => inputLetters);
+			disabledKeysState.set([...disabledLetters]);
+			rowState.set(rows);
+			inputState.set(inputLetters);
 			return;
 		}
 
 		if (letterCursor == -1 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
 
 		inputLetters[letterCursor] = key;
-		inputState.update(_ => inputLetters);
+		inputState.set(inputLetters);
 	}
 </script>
 
@@ -264,7 +274,7 @@
 
 	keyboard row {
 		display: flex;
-		gap: min(0.75vw, 0.75ch);
+		gap: min(0.5vw, 0.5ch);
 	}
 
 	button {
@@ -276,10 +286,12 @@
 		font-size: min(4vw, 2.5ch);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
+		min-width: min(6vw, 3ch);
 		border: 1px solid #666666;
 		text-transform: capitalize;
 		transition-duration: 0.05s;
 		color: white;
+		touch-action: manipulation;
 	}
 
 	button:hover {
@@ -327,7 +339,7 @@
 		color: #333333;
 	}
 
-	.not-in-word {
+	.not-in-word, button.not-in-word:hover {
 		background-color: #111111;
 		color: #333333;
 	}
