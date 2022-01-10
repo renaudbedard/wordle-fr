@@ -124,6 +124,10 @@
 			return;
 		}
 
+		// Already done!
+		if (rows.length == 6 || inputLetters.length == 0) 
+			return;
+
 		if ((key == 'Backspace' || key == 'Delete' || key == '\u232b') && letterCursor != 0) {
 			if (letterCursor == -1) letterCursor = 4; else letterCursor = letterCursor - 1;
 			inputLetters[letterCursor] = '';
@@ -196,7 +200,7 @@
 
 			rows = [...rows, mutatedRow];
 
-			if (toCheck.length > 0) 
+			if (toCheck.length > 0 && rows.length < 6) 
 				inputLetters = ['', '', '', '', ''];
 			else
 				inputLetters = [];
