@@ -61,13 +61,22 @@
 	let inError = false;
 	let lastErrorTimer;
 
-	const glyphRows = [
+	const qwertyLayout = [
 		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
-		[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300' ],
+		[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u0327' ],
 		[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
 	];
 
+	const azertyLayout = [
+		[ 'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
+		[ 'Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù' ],
+		[ '\u23ce', 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u232b' ]
+	];
+
+	let currentLayout = qwertyLayout;
+
 	const possibleCombinations = {
+		'\u0327': ['C'],
 		'\u0302': ['A', 'E', 'I', 'O', 'U'],
 		'\u0308': ['E', 'I', 'U'],
 		'\u0300': ['A', 'E', 'U']
@@ -75,7 +84,7 @@
 
 	const controlKeys = ['\u23ce', '\u232b'];
 
-	let keyRows = glyphRows.map(r => r.map(k => {
+	let keyRows = currentLayout.map(r => r.map(k => {
 		return { glyph: k, class: null };
 	}));
 
@@ -134,7 +143,7 @@
 		}
 
 		// Combinations
-		if (key == '\u0302' || key == '\u0300' || key == '\u0308') {
+		if (Object.keys(possibleCombinations).includes(key)) {
 			if (combiningBuffer.length > 0)
 				combiningBuffer = '';
 			else
