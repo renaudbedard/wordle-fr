@@ -30,3 +30,6 @@ rowState.subscribe((value) => { if (browser) localStorage.setItem('rowState', JS
 
 export const disabledKeysState = writable(browser ? JSON.parse(localStorage.getItem('disabledKeysState')) ?? [] : []);
 disabledKeysState.subscribe((value) => { if (browser) localStorage.setItem('disabledKeysState', JSON.stringify(value))});
+
+export const layoutState = writable(browser ? localStorage.getItem('layout') ?? 'qwerty' : 'qwerty');
+layoutState.subscribe((value) => { if (browser) localStorage.setItem('layout', value)});

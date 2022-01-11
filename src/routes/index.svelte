@@ -47,7 +47,7 @@
 <script>
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
-	import { rowState, inputState, disabledKeysState } from '$lib/gameState';
+	import { rowState, inputState, disabledKeysState, layoutState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
@@ -57,6 +57,8 @@
 	let inputLetters = [];
 	let disabledLetters = new Set();
 	let combiningBuffer = '';
+	let keyRows = [];
+	let layoutName = '';
 
 	let inError = false;
 	let lastErrorTimer;
@@ -73,8 +75,6 @@
 		[ '\u23ce', 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u232b' ]
 	];
 
-	let currentLayout = qwertyLayout;
-
 	const possibleCombinations = {
 		'\u0327': ['C'],
 		'\u0302': ['A', 'E', 'I', 'O', 'U'],
@@ -84,15 +84,22 @@
 
 	const controlKeys = ['\u23ce', '\u232b'];
 
-	let keyRows = currentLayout.map(r => r.map(k => {
-		return { glyph: k, class: null };
-	}));
-
 	rowState.subscribe(value => rows = value);
 	inputState.subscribe(value => {
 		inputLetters = value;
 		letterCursor = inputLetters.indexOf('');
 	});
+
+	layoutState.subscribe(value => {
+		const currentLayout = value == 'qwerty' ? qwertyLayout : azertyLayout;
+		layoutName = value;
+		keyRows = currentLayout.map(r => r.map(k => {
+			return { glyph: k, class: disabledLetters.has(k.toUpperCase()) ? 'not-in-word' : null };
+		}));
+	});
+
+	$: layoutState.set(layoutName);
+
 	disabledKeysState.subscribe(value => {
 		disabledLetters.clear();
 		if (value == null || !(typeof value[Symbol.iterator] === 'function'))
@@ -254,7 +261,7 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <header>
-	<h1>MOTDLE 🇫🇷</h1>
+	<h1>MOTDLE</h1>
 </header>
 
 <game-board>
@@ -284,6 +291,10 @@
 </game-board>
 
 <keyboard>
+	<row>
+		<label><input bind:group={layoutName} type='radio' value='qwerty' /> 🇨🇦</label>
+		<label><input bind:group={layoutName} type='radio' value='azerty' /> 🇫🇷</label>
+	</row>
 	{#each keyRows as row}
 		<row>
 			{#each row as key}
