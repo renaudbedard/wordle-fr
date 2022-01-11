@@ -364,7 +364,13 @@
 
 	keyboard row {
 		display: flex;
-		gap: min(0.5vw, 0.5ch);
+		gap: 0.5vw;
+	}
+
+	@media (min-width: 600px) {
+		keyboard row {
+			gap: 0.5ch;
+		}
 	}
 
 	keyboard locale-selector {
