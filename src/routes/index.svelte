@@ -323,10 +323,10 @@
 </game-board>
 
 <keyboard>
-	<row>
+	<locale-selector>
 		<label><input bind:group={layoutName} type='radio' value='qwerty' /> 🇨🇦</label>
 		<label><input bind:group={layoutName} type='radio' value='azerty' /> 🇫🇷</label>
-	</row>
+	</locale-selector>
 	{#each keyRows as row}
 		<row>
 			{#each row as key}
@@ -367,13 +367,23 @@
 		gap: min(0.5vw, 0.5ch);
 	}
 
+	keyboard locale-selector {
+		display: flex;
+		gap: min(10vw, 4ch);
+		margin-bottom: 1ch;
+	}
+
+	keyboard label {
+		display: flex;
+	}
+
 	button {
 		display: grid;
 		justify-items: center;
 		align-items: center;
 		background-color: #333333;
 		height: min(9vw, 4ch);
-		font-size: min(4vw, 2.5ch);
+		font-size: min(4.5vw, 2.5ch);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
 		min-width: min(6vw, 3ch);
@@ -433,4 +443,47 @@
 		background-color: #111111;
 		color: #333333;
 	}
+	
+	input[type='radio'] {
+		/* Add if not using autoprefixer */
+		-webkit-appearance: none;
+		appearance: none;
+		/* For iOS < 15 to remove gradient background */
+		background-color: #fff;
+		/* Not removed via appearance */
+		margin: 0;		
+		font: inherit;
+		color: currentColor;
+		width: 1em;
+		height: 1em;
+		border: 0.15em solid currentColor;
+		border-radius: 50%;
+		transform: translateX(-0.5em);
+		display: grid;
+		place-content: center;
+	}
+
+	:root {
+		--form-control-color: #111111;
+	}
+
+	*,
+	*:before,
+	*:after {
+		box-sizing: border-box;
+	}	
+
+	input[type="radio"]::before {
+		content: "";
+		width: 0.75em;
+		height: 0.75em;
+		border-radius: 50%;
+		transform: scale(0);
+		transition: 66ms transform ease-in-out;
+		box-shadow: inset 1em 1em var(--form-control-color);
+	}	
+
+	input[type="radio"]:checked::before {
+		transform: scale(1);
+	}	
 </style>
