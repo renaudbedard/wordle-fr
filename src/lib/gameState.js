@@ -28,8 +28,8 @@ inputState.subscribe((value) => { if (browser) localStorage.setItem('inputState'
 export const rowState = writable(browser ? JSON.parse(localStorage.getItem('rowState')) ?? [] : []);
 rowState.subscribe((value) => { if (browser) localStorage.setItem('rowState', JSON.stringify(value))});
 
-export const disabledKeysState = writable(browser ? JSON.parse(localStorage.getItem('disabledKeysState')) ?? [] : []);
-disabledKeysState.subscribe((value) => { if (browser) localStorage.setItem('disabledKeysState', JSON.stringify(value))});
-
 export const layoutState = writable(browser ? localStorage.getItem('layout') ?? 'qwerty' : 'qwerty');
 layoutState.subscribe((value) => { if (browser) localStorage.setItem('layout', value)});
+
+export const disabledKeysState = writable(browser ? JSON.parse(localStorage.getItem('disabledKeysState')) ?? [] : []);
+disabledKeysState.subscribe((value) => { if (browser) localStorage.setItem('disabledKeysState', JSON.stringify(value))});

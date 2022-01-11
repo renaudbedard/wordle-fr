@@ -63,17 +63,18 @@
 	let inError = false;
 	let lastErrorTimer;
 
-	const qwertyLayout = [
-		[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
-		[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u0327' ],
-		[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
-	];
-
-	const azertyLayout = [
-		[ 'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
-		[ 'Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù' ],
-		[ '\u23ce', 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u232b' ]
-	];
+	const layouts = {
+		'qwerty': [
+			[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
+			[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u0327' ],
+			[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
+		],
+		'azerty': [
+			[ 'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
+			[ 'Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù' ],
+			[ '\u23ce', 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u232b' ]
+		]
+	}
 
 	const possibleCombinations = {
 		'\u0327': ['C'],
@@ -91,10 +92,10 @@
 	});
 
 	layoutState.subscribe(value => {
-		const currentLayout = value == 'qwerty' ? qwertyLayout : azertyLayout;
+		const currentLayout = layouts[value];
 		layoutName = value;
 		keyRows = currentLayout.map(r => r.map(k => {
-			return { glyph: k, class: disabledLetters.has(k.toUpperCase()) ? 'not-in-word' : null };
+			return { glyph: k, class: isGlyphInWord(k) ? null : 'not-in-word' };
 		}));
 	});
 
@@ -107,9 +108,8 @@
 		for (const letter of value)
 			disabledLetters.add(letter);
 		keyRows = keyRows.map(r => r.map(k => {
-			if (disabledLetters.has(k.glyph.toUpperCase())) {
+			if (!isGlyphInWord(k.glyph))
 				k.class = 'not-in-word';
-			}
 			return k;
 		}));
 	});	
@@ -136,6 +136,38 @@
 	*/
 	function neutralizeAccents(string) {
 		return string.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+	}
+
+	/**
+	* @param {string} key
+	*/
+	function isGlyphInWord(key) {
+		if (disabledLetters.has(key.toUpperCase()))
+			return false;
+
+		const combinations = possibleCombinations[key];
+		if (combinations) {
+			let allCombinationsDisabled = true;
+			for (const letterToCombine of combinations) {
+				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
+				if (!disabledLetters.has(combinedGlyph)) {
+					allCombinationsDisabled = false;
+					break;
+				}
+			}
+			if (allCombinationsDisabled)
+				return false;
+		}
+
+		return true;
+	}	
+
+	/**
+	* @param {{ class: string; glyph: string; }} key
+	*/
+	function isKeyDisabled(key) {
+		return key.class == 'not-in-word' ||
+		 (combiningBuffer.length > 0 && !possibleCombinations[combiningBuffer].includes(key.glyph) && !controlKeys.includes(key.glyph) && key.glyph != combiningBuffer);
 	}
 
 	/**
@@ -298,7 +330,7 @@
 	{#each keyRows as row}
 		<row>
 			{#each row as key}
-				<button disabled={key.class == 'not-in-word' || (combiningBuffer.length > 0 && !possibleCombinations[combiningBuffer].includes(key.glyph) && !controlKeys.includes(key.glyph) && key.glyph != combiningBuffer)} class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+				<button disabled={isKeyDisabled(key)} class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
 			{/each}
 		</row>
 	{/each}
@@ -327,6 +359,7 @@
 		left: 0;
 		width: 100%;
 		margin-bottom: 1em;
+		gap: min(0.5vw, 0.5ch);
 	}
 
 	keyboard row {
