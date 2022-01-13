@@ -359,12 +359,12 @@
 		left: 0;
 		width: 100%;
 		margin-bottom: 1em;
-		gap: min(0.5vw, 4px);
+		gap: 2px;
 	}
 
 	keyboard row {
 		display: flex;
-		gap: min(0.5vw, 4px);
+		gap: 2px;
 	}
 
 	keyboard locale-selector {
