@@ -8,7 +8,7 @@ Je ne détiens aucun droit sur le concept original.
 
 Cette version se démarque principalement de ces façons :
 
-- Les accents ne sont acceptés que si l'orthographe est correcte, incluant les accents
+- Les mots ne sont acceptés que si l'orthographe est correcte, incluant les accents
 - Le clavier virtuel permet de basculer entre les modes QWERTY et AZERTY, et contient les touches d'accents
 
 ## Comment y jouer?
