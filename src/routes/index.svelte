@@ -389,7 +389,7 @@
 		align-items: center;
 		background-color: #333333;
 		height: min(9vw, 4ch);
-		font-size: min(4.5vw, 2.5ch);
+		font-size: min(4.5vw, 25px);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
 		min-width: min(6vw, 3ch);
