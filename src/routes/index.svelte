@@ -166,8 +166,7 @@
 	* @param {{ class: string; glyph: string; }} key
 	*/
 	function isKeyDisabled(key) {
-		return key.class == 'not-in-word' ||
-		 (combiningBuffer.length > 0 && !possibleCombinations[combiningBuffer].includes(key.glyph) && !controlKeys.includes(key.glyph) && key.glyph != combiningBuffer);
+		return combiningBuffer.length > 0 && !possibleCombinations[combiningBuffer].includes(key.glyph) && !controlKeys.includes(key.glyph) && key.glyph != combiningBuffer;
 	}
 
 	/**
@@ -183,10 +182,14 @@
 
 		// Combinations
 		if (Object.keys(possibleCombinations).includes(key)) {
-			if (combiningBuffer.length > 0)
+			if (combiningBuffer.length > 0) {
 				combiningBuffer = '';
-			else
+				keyRows = keyRows;
+			} else
+			{
 				combiningBuffer = key;
+				keyRows = keyRows;
+			}
 			return;
 		}
 
@@ -292,49 +295,51 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<header>
-	<h1>MOTDLE</h1>
-</header>
+<container>
+	<header>
+		<h1>MOTDLE</h1>
+	</header>
 
-<game-board>
-	<rows>
-		{#each rows as row}
+	<game-board>
+		<rows>
+			{#each rows as row}
+				<row>
+					{#each row as letter}
+						<letter-box class={letter.class}>
+							<letter>{letter.glyph}</letter>
+						</letter-box>
+					{/each}
+				</row>
+			{/each}
+
 			<row>
-				{#each row as letter}
-					<letter-box class={letter.class}>
-						<letter>{letter.glyph}</letter>
+				{#each inputLetters as letter}
+					<letter-box>
+						<letter>{letter}</letter>
 					</letter-box>
 				{/each}
 			</row>
+		</rows>
+
+		{#if inError}
+			<error-box out:fade>Ce mot n'est pas reconnu!</error-box>
+		{/if}
+	</game-board>
+
+	<keyboard>
+		<locale-selector>
+			<label><input bind:group={layoutName} type='radio' value='qwerty' /> 🇨🇦</label>
+			<label><input bind:group={layoutName} type='radio' value='azerty' /> 🇫🇷</label>
+		</locale-selector>
+		{#each keyRows as row}
+			<row>
+				{#each row as key}
+					<button disabled={isKeyDisabled(key)} class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+				{/each}
+			</row>
 		{/each}
-
-		<row>
-			{#each inputLetters as letter}
-				<letter-box>
-					<letter>{letter}</letter>
-				</letter-box>
-			{/each}
-		</row>
-	</rows>
-
-	{#if inError}
-		<error-box out:fade>Ce mot n'est pas reconnu!</error-box>
-	{/if}
-</game-board>
-
-<keyboard>
-	<locale-selector>
-		<label><input bind:group={layoutName} type='radio' value='qwerty' /> 🇨🇦</label>
-		<label><input bind:group={layoutName} type='radio' value='azerty' /> 🇫🇷</label>
-	</locale-selector>
-	{#each keyRows as row}
-		<row>
-			{#each row as key}
-				<button disabled={isKeyDisabled(key)} class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
-			{/each}
-		</row>
-	{/each}
-</keyboard>	
+	</keyboard>	
+</container>
 
 <style>
 	:root {
@@ -343,13 +348,22 @@
 		font-family: sans-serif;
 	}
 
+	container {
+		display: grid;
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 100%;
+	}
+
 	header,
 	game-board,
 	keyboard {
+		align-self: bottom;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
 	}
 
 	header,
@@ -357,16 +371,16 @@
 		gap: 1ch;
 	}
 
+	game-board {
+		padding-bottom: 30px;
+	}
+
 	error-box {
 		margin-top: 1ch;
 	}
 
 	keyboard {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		margin-bottom: 1em;
+		padding-bottom: 5px;
 		gap: 2px;
 	}
 
@@ -390,7 +404,7 @@
 		justify-items: center;
 		align-items: center;
 		background-color: #333333;
-		height: min(10vw, 4ch);
+		height: min(15vw, 4.5ch);
 		font-size: min(4.5vw, 14pt);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
@@ -448,11 +462,11 @@
 		color: #333333;
 	}
 
-	.not-in-word, button.not-in-word:hover, button:disabled {
+	.not-in-word, button:disabled {
 		background-color: #111111;
 		color: #333333;
 	}
-	
+
 	input[type='radio'] {
 		/* Add if not using autoprefixer */
 		-webkit-appearance: none;
