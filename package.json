@@ -2,7 +2,7 @@
 	"name": "wordle-fr",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "svelte-kit dev",
+		"dev": "svelte-kit dev --host",
 		"start": "node build/index.js",
 		"build": "svelte-kit build",
 		"package": "svelte-kit package",

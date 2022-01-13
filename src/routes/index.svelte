@@ -390,16 +390,17 @@
 		justify-items: center;
 		align-items: center;
 		background-color: #333333;
-		height: min(9vw, 4ch);
-		font-size: min(4.5vw, 25px);
+		height: min(10vw, 4ch);
+		font-size: min(4.5vw, 14pt);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
-		min-width: min(6vw, 3ch);
+		min-width: min(7vw, 3ch);
 		border: 1px solid #666666;
 		text-transform: capitalize;
 		transition-duration: 0.05s;
 		color: white;
 		touch-action: manipulation;
+		margin: 0;
 	}
 
 	button:hover {
