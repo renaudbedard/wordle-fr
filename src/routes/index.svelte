@@ -350,7 +350,15 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+	}
+
+	header,
+	game-board {
 		gap: 1ch;
+	}
+
+	error-box {
+		margin-top: 1ch;
 	}
 
 	keyboard {
@@ -458,10 +466,16 @@
 		height: 1em;
 		border: 0.15em solid currentColor;
 		border-radius: 50%;
-		transform: translateX(-0.5em);
+		transform: translateX(-0.5em) translateY(0.3em);
 		display: grid;
 		place-content: center;
 	}
+
+	@supports (-moz-appearance:none) {
+		input[type='radio'] {
+			transform: translateX(-0.5em) !important;
+		}
+	}	
 
 	:root {
 		--form-control-color: #111111;
