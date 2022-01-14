@@ -119,9 +119,12 @@
 	*/
 	function handleKeydown(event) {
 		if (event.ctrlKey || event.metaKey) return;
-		handleKey(event.key);
+		if (event.key == 'Dead' && event.code == 'BracketLeft')
+			handleKey(event.shiftKey ? '\u0308' : '\u0302');
+		else
+			handleKey(event.key);
 	}
-
+	
 	/**
 	* @param {MouseEvent} evt
 	*/
@@ -284,8 +287,12 @@
 			return;
 
 		if (combiningBuffer.length > 0) {
+			if (!possibleCombinations[combiningBuffer].includes(key.toUpperCase()))
+				return;
+
 			key = `${key}${combiningBuffer}`.normalize();
 			combiningBuffer = '';
+			keyRows = keyRows;
 		}
 
 		inputLetters[letterCursor] = key;
