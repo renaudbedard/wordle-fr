@@ -47,7 +47,7 @@
 <script>
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
-	import { rowState, inputState, disabledKeysState, layoutState } from '$lib/gameState';
+	import { rowState, inputState, layoutState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
@@ -55,7 +55,6 @@
 	let rows = [];
 	let letterCursor = 0;
 	let inputLetters = [];
-	let disabledLetters = new Set();
 	let combiningBuffer = '';
 	let keyRows = [];
 	let layoutName = '';
@@ -85,7 +84,18 @@
 
 	const controlKeys = ['\u23ce', '\u232b'];
 
-	rowState.subscribe(value => rows = value);
+	rowState.subscribe(value => {
+		rows = value; 
+	});
+
+	$: {
+		keyRows.map(r => r.map(k => {
+			k.class = getKeyClass(k.glyph);
+			return k;
+		}));
+		keyRows = keyRows;
+	};
+	
 	inputState.subscribe(value => {
 		inputLetters = value;
 		letterCursor = inputLetters.indexOf('');
@@ -95,24 +105,11 @@
 		const currentLayout = layouts[value];
 		layoutName = value;
 		keyRows = currentLayout.map(r => r.map(k => {
-			return { glyph: k, class: isGlyphInWord(k) ? null : 'not-in-word' };
+			return { glyph: k, class: getKeyClass(k) };
 		}));
 	});
 
 	$: layoutState.set(layoutName);
-
-	disabledKeysState.subscribe(value => {
-		disabledLetters.clear();
-		if (value == null || !(typeof value[Symbol.iterator] === 'function'))
-			return;
-		for (const letter of value)
-			disabledLetters.add(letter);
-		keyRows = keyRows.map(r => r.map(k => {
-			if (!isGlyphInWord(k.glyph))
-				k.class = 'not-in-word';
-			return k;
-		}));
-	});	
 
 	/**
 	* @param {KeyboardEvent} event
@@ -144,25 +141,50 @@
 	/**
 	* @param {string} key
 	*/
-	function isGlyphInWord(key) {
-		if (disabledLetters.has(key.toUpperCase()))
-			return false;
+	function getKeyClass(key) {
+		// Include combination buffer if any
+		if (combiningBuffer.length > 0)
+			key = `${key}${combiningBuffer}`.normalize().toUpperCase();
+
+		// Collate all attempted letters and their class
+		let keyStates = {};
+		for (const row of rows) {
+			for (const rowLetter of row) {
+				if (rowLetter.glyph != '\0' && rowLetter.glyph.length == 1)
+				{
+					const upperCaseGlyph = rowLetter.glyph.toUpperCase();
+					if (keyStates[upperCaseGlyph] == 'in-place')
+						continue;
+					keyStates[upperCaseGlyph] = rowLetter.class;
+				}
+			}
+		}
+
+		if (Object.keys(keyStates).includes(key))
+			return keyStates[key];
 
 		const combinations = possibleCombinations[key];
 		if (combinations) {
-			let allCombinationsDisabled = true;
-			for (const letterToCombine of combinations) {
+			if (combinations.every(letterToCombine => {
 				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
-				if (!disabledLetters.has(combinedGlyph)) {
-					allCombinationsDisabled = false;
-					break;
-				}
-			}
-			if (allCombinationsDisabled)
-				return false;
+				return keyStates[combinedGlyph] == 'not-in-word';
+			}))
+				return 'not-in-word';
+
+			if (combinations.some(letterToCombine => {
+				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
+				return keyStates[combinedGlyph] == 'in-word';
+			}))
+				return 'in-word';
+
+			if (combinations.some(letterToCombine => {
+				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
+				return keyStates[combinedGlyph] == 'in-place';
+			}))
+				return 'in-place';
 		}
 
-		return true;
+		return null;
 	}	
 
 	/**
@@ -247,11 +269,6 @@
 				const rowLetter = { glyph: inputLetters[i] };
 				if (normalizedRandomWordLetters.includes(normalizedInputLetter)) {
 					rowLetter.class = 'in-word';
-					if (!upperCaseRandomWord.includes(inputUpperCaseWord[i])) {
-						disabledLetters.add(inputUpperCaseWord[i]);
-					} else if (!upperCaseRandomWord.includes(normalizedInputLetter[i])) {
-						disabledLetters.add(normalizedInputLetter[i]);
-					}					
 					for (let i = 0; i < 5; i++) {
 						if (normalizedRandomWordLetters[i] == normalizedInputLetter) {
 							rowLetter.glyph = randomWord[i];
@@ -260,11 +277,6 @@
 						}
 					}
 				} else {
-					if (!upperCaseRandomWord.includes(inputUpperCaseWord[i])) {
-						disabledLetters.add(inputUpperCaseWord[i]);
-					} else if (!upperCaseRandomWord.includes(normalizedInputLetter[i])) {
-						disabledLetters.add(normalizedInputLetter[i]);
-					}
 					rowLetter.class = 'not-in-word';
 				}
 				mutatedRow[i] = rowLetter;
@@ -277,7 +289,6 @@
 			else
 				inputLetters = [];
 
-			disabledKeysState.set([...disabledLetters]);
 			rowState.set(rows);
 			inputState.set(inputLetters);
 			return;
@@ -410,13 +421,13 @@
 		display: grid;
 		justify-items: center;
 		align-items: center;
-		background-color: #333333;
+		background-color: #555555;
 		height: min(15vw, 4.5ch);
 		font-size: min(4.5vw, 14pt);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
 		min-width: min(7vw, 3ch);
-		border: 1px solid #666666;
+		border: 1px solid #888888;
 		text-transform: capitalize;
 		transition-duration: 0.05s;
 		color: white;
@@ -449,9 +460,18 @@
 		display: grid;
 		justify-items: center;
 		align-items: center;
-		background-color: #333333;
+		background-color: black;
+		border: 1px solid #666666;
 		width: min(15vw, 7ch);
 		height: min(15vw, 7ch);
+	}
+
+	letter-box.not-in-word, letter-box.in-word, letter-box.in-place {
+		border: 0;
+	}
+
+	letter-box.not-in-word {
+		color: #cccccc;
 	}
 
 	letter {
@@ -469,9 +489,14 @@
 		color: #333333;
 	}
 
-	.not-in-word, button:disabled {
-		background-color: #111111;
-		color: #333333;
+	.not-in-word {
+		background-color: #222222;
+		color: #999999;
+	}
+
+	button:disabled {
+		background-color: #000000;
+		color: #000000;
 	}
 
 	input[type='radio'] {
