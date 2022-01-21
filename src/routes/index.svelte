@@ -86,6 +86,7 @@
 
 	rowState.subscribe(value => {
 		rows = value; 
+		keyRows = keyRows;
 	});
 
 	$: {
