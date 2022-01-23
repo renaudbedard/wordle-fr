@@ -205,7 +205,6 @@
 	*/
 	function handleKey(key) {
 		// DEBUG
-		console.log(randomWord);
 		if (key == 'Escape') {
 			window.localStorage.clear();
 			window.location.reload();
