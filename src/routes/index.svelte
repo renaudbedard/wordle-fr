@@ -99,7 +99,7 @@
 	};
 	
 	inputState.subscribe(value => {
-		inputLetters = value;
+		inputLetters = value == null ? null : value.filter(x => x != '/0');
 	});
 
 	layoutState.subscribe(value => {
