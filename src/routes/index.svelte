@@ -47,13 +47,14 @@
 <script>
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
-	import { rowState, inputState, layoutState } from '$lib/gameState';
+	import { rowState, inputState, layoutState, gameState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
 
+	const arrayOf5 = new Array(5);
+	const arrayOf6 = new Array(6);
 	let rows = [];
-	let letterCursor = 0;
 	let inputLetters = [];
 	let combiningBuffer = '';
 	let keyRows = [];
@@ -99,7 +100,6 @@
 	
 	inputState.subscribe(value => {
 		inputLetters = value;
-		letterCursor = inputLetters.indexOf('');
 	});
 
 	layoutState.subscribe(value => {
@@ -111,6 +111,11 @@
 	});
 
 	$: layoutState.set(layoutName);
+
+	gameState.subscribe(value => {
+		if (value == "won")
+			inputLetters = null;
+	});
 
 	/**
 	* @param {KeyboardEvent} event
@@ -200,6 +205,7 @@
 	*/
 	function handleKey(key) {
 		// DEBUG
+		console.log(randomWord);
 		if (key == 'Escape') {
 			window.localStorage.clear();
 			window.location.reload();
@@ -220,17 +226,16 @@
 		}
 
 		// Already done!
-		if (rows.length == 6 || inputLetters.length == 0) 
+		if (rows.length == 6 || inputLetters == null) 
 			return;
 
-		if ((key == 'Backspace' || key == 'Delete' || key == '\u232b') && letterCursor != 0) {
-			if (letterCursor == -1) letterCursor = 4; else letterCursor = letterCursor - 1;
-			inputLetters[letterCursor] = '';
+		if ((key == 'Backspace' || key == 'Delete' || key == '\u232b') && inputLetters.length != 0) {
+			inputLetters.pop();
 			inputState.set(inputLetters);
 			return;
 		}
 
-		if (letterCursor == -1 && (key == 'Enter' || key == 'NumpadEnter' || key == '\u23ce')) {
+		if (inputLetters.length == 5 && (key == 'Enter' || key == 'NumpadEnter' || key == '\u23ce')) {
 			const inputUpperCaseWord = inputLetters.join('').toUpperCase();
 
 			if (!allUpperCaseWords.includes(inputUpperCaseWord)) {
@@ -285,17 +290,17 @@
 
 			rows = [...rows, mutatedRow];
 
-			if (toCheck.length > 0 && rows.length < 6) 
-				inputLetters = Array(5).fill('');
-			else
+			if (toCheck.length > 0)
 				inputLetters = [];
+			else
+				gameState.set("won");
 
 			rowState.set(rows);
 			inputState.set(inputLetters);
 			return;
 		}
 
-		if (letterCursor == -1 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) 
+		if (inputLetters.length == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) 
 			return;
 
 		if (combiningBuffer.length > 0) {
@@ -307,7 +312,7 @@
 			keyRows = keyRows;
 		}
 
-		inputLetters[letterCursor] = key;
+		inputLetters.push(key);
 		inputState.set(inputLetters);
 	}
 </script>
@@ -321,23 +326,36 @@
 
 	<game-board>
 		<rows>
-			{#each rows as row}
+			{#each arrayOf6 as _, ri}
 				<row>
-					{#each row as letter}
-						<letter-box class={letter.class}>
-							<letter>{letter.glyph}</letter>
-						</letter-box>
-					{/each}
+					{#if ri < rows.length}
+						{#each rows[ri] as letter, li}
+							<letter-box class={letter.class}>
+								<letter>{letter.glyph}</letter>
+							</letter-box>
+						{/each}
+					{/if}
+					{#if inputLetters != null}
+						{#if ri == rows.length}
+							{#each arrayOf5 as _, li}
+								{#if li < inputLetters.length}
+								<letter-box class="with-letter">
+									<letter>{inputLetters[li]}</letter>
+								</letter-box>
+								{/if}
+								{#if li >= inputLetters.length}
+								<letter-box />
+								{/if}
+							{/each}
+						{/if}
+						{#if ri > rows.length}
+							{#each arrayOf5 as __}
+								<letter-box />
+							{/each}
+						{/if}
+					{/if}
 				</row>
 			{/each}
-
-			<row>
-				{#each inputLetters as letter}
-					<letter-box>
-						<letter>{letter}</letter>
-					</letter-box>
-				{/each}
-			</row>
 		</rows>
 
 		{#if inError}
@@ -369,10 +387,10 @@
 
 	container {
 		display: grid;
-    min-height: 100%;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    grid-template-columns: 100%;
+		min-height: 100%;
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+		grid-template-columns: 100%;
 	}
 
 	header,
@@ -462,7 +480,7 @@
 		justify-items: center;
 		align-items: center;
 		background-color: black;
-		border: 1px solid #666666;
+		border: 2px solid #3d3d3d;
 		width: min(15vw, 7ch);
 		height: min(15vw, 7ch);
 	}
@@ -473,6 +491,10 @@
 
 	letter-box.not-in-word {
 		color: #cccccc;
+	}
+
+	letter-box.with-letter {
+		border: 2px solid #696969;
 	}
 
 	letter {
