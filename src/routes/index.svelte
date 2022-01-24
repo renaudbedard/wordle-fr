@@ -234,8 +234,7 @@
 			if (combiningBuffer.length > 0) {
 				combiningBuffer = '';
 				keyRows = keyRows;
-			} else
-			{
+			} else {
 				combiningBuffer = key;
 				keyRows = keyRows;
 			}
@@ -323,6 +322,10 @@
 			return;
 
 		if (combiningBuffer.length > 0) {
+			const neutralizedKey = neutralizeAccents(key);
+			if (possibleCombinations[combiningBuffer].includes(neutralizedKey.toUpperCase()))
+				key = neutralizedKey;
+
 			if (!possibleCombinations[combiningBuffer].includes(key.toUpperCase()))
 				return;
 
