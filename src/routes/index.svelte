@@ -69,6 +69,8 @@
 	let timeLeft;
 	let progress;
 
+	let shareButtonText = '📋 Partager';
+
 	const layouts = {
 		'qwerty': [
 			[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
@@ -119,7 +121,7 @@
 	$: layoutState.set(layoutName);
 
 	progressState.subscribe(value => {
-		if (value == "won") {
+		if (value == "won" || value == "lost") {
 			inputLetters = null;
 			function updateDate() {
 				const nowDate = new Date();
@@ -305,9 +307,11 @@
 
 			rows = [...rows, mutatedRow];
 
-			if (toCheck.length > 0)
+			if (toCheck.length > 0) {
 				inputLetters = [];
-			else
+				if (rows.length == 6)
+					progressState.set("lost");
+			} else
 				progressState.set("won");
 
 			rowState.set(rows);
@@ -330,21 +334,28 @@
 		inputLetters.push(key);
 		inputState.set(inputLetters);
 	}
+
+	function generateShareText() {
+		const tiles = rows.map(row => row.map(letter => letter.class == 'in-word' ? '🟨' : letter.class == 'in-place' ? '🟩' : '⬛').join('')).join('\n');
+		const nowUtc = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate());
+		const baseUtc = Date.UTC(2022, 0, 24);
+		const dayCount = Math.floor((nowUtc - baseUtc) / 1000 / 60 / 60 / 24);
+		navigator.clipboard.writeText(`MOTDLE ${dayCount+1} - ${progress == "lost" ? "X" : rows.length}/6\n\n${tiles}`);
+		shareButtonText = '✔️ Copié!';
+	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
 <container>
-	<header>
-		<h1>MOTDLE</h1>
-	</header>
+	<header>&nbsp;</header>
 
 	<game-board>
 		<rows>
 			{#each arrayOf6 as _, ri}
 				<row>
 					{#if ri < rows.length}
-						{#each rows[ri] as letter, li}
+						{#each rows[ri] as letter}
 							<letter-box class={letter.class}>
 								<letter>{letter.glyph}</letter>
 							</letter-box>
@@ -364,7 +375,7 @@
 							{/each}
 						{/if}
 						{#if ri > rows.length}
-							{#each arrayOf5 as __}
+							{#each arrayOf5 as _}
 								<letter-box />
 							{/each}
 						{/if}
@@ -380,15 +391,30 @@
 	</game-board>
 
 	{#if progress == "won"}
+		<shadow>&nbsp;</shadow>
 		<results in:fly="{{ y: 50, duration: 500 }}">
 			<result-text>
-				<h2>Bravo! 🎉</h2>
-				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition de '{randomWord}' sur wiktionnaire</a></p>
+				<h2>Réussi en {rows.length} essai{rows.length == 1 ? '' : 's'} 🎉</h2>
+				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition de «{randomWord}» sur wiktionnaire</a></p>
+				<button class="share" on:click={generateShareText}>{shareButtonText}</button>
 				<h4>Prochain mot dans</h4>
-				<h2>{timeLeft}</h2>
+				<h2 class="timer">{timeLeft}</h2>
 			</result-text>
 		</results>
 	{/if}	
+
+	{#if progress == "lost"}
+		<shadow>&nbsp;</shadow>
+		<results in:fly="{{ y: 50, duration: 500 }}">
+			<result-text>
+				<h2>Le mot était «{randomWord}»</h2>
+				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition sur wiktionnaire</a></p>
+				<button class="share" on:click={generateShareText}>{shareButtonText}</button>
+				<h4>Prochain mot dans</h4>
+				<h2 class="timer">{timeLeft}</h2>
+			</result-text>
+		</results>
+	{/if}
 
 	<keyboard>
 		<locale-selector>
@@ -420,6 +446,13 @@
 		grid-template-columns: 100%;
 	}
 
+	shadow {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+	}
+
 	header,
 	game-board,
 	keyboard {
@@ -428,6 +461,33 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: flex-start;
+	}
+
+	button.share {
+		margin-top: 5px;
+		padding: 5px 15px;
+		height: 35px;
+		font-size: 12pt;
+		background-color: #f3f2d9;
+		border-color: rgb(187, 187, 187);
+		color: rgb(46, 46, 46);
+		font-weight: bold;
+		border-radius: 5px;
+	}
+	button.share:hover {
+		background-color: #eceac5; 
+		color: black;
+	}
+	button.share:active {
+		background-color: #acab97;
+		color: rgb(58, 58, 58);
+	}	
+
+	h4 {
+		margin-bottom: 0px;
+	}
+	h2.timer {
+		margin-top: 5px;
 	}
 
 	header,
@@ -502,7 +562,6 @@
 	}
 
 	button {
-		display: grid;
 		justify-items: center;
 		align-items: center;
 		background-color: #555555;
@@ -585,6 +644,10 @@
 	button:disabled {
 		background-color: #000000;
 		color: #000000;
+	}
+
+	input {
+		z-index: -1;
 	}
 
 	input[type='radio'] {
