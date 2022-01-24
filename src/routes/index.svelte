@@ -334,6 +334,11 @@
 							</letter-box>
 						{/each}
 					{/if}
+					{#if (ri == rows.length + 1 || (ri == 4 && rows.length == 5)) && inError} 
+						<error-box out:fade>
+							<error-text>Ce mot n'est pas reconnu!</error-text>
+						</error-box>
+					{/if}
 					{#if inputLetters != null}
 						{#if ri == rows.length}
 							{#each arrayOf5 as _, li}
@@ -356,10 +361,6 @@
 				</row>
 			{/each}
 		</rows>
-
-		{#if inError}
-			<error-box out:fade>Ce mot n'est pas reconnu!</error-box>
-		{/if}
 	</game-board>
 
 	<keyboard>
@@ -412,7 +413,20 @@
 	}
 
 	error-box {
-		margin-top: 1ch;
+		float: left;
+		position: absolute;
+		left: 50%;
+		margin-top: 10px;
+	}
+
+	error-text {
+		float: left;
+		position: relative;
+		left: -50%;
+		background: white;
+		color: black;
+		padding: 10px;
+		border-radius: 10px;
 	}
 
 	keyboard {
