@@ -334,11 +334,6 @@
 							</letter-box>
 						{/each}
 					{/if}
-					{#if (ri == rows.length + 1 || (ri == 4 && rows.length == 5)) && inError} 
-						<error-box out:fade>
-							<error-text>Ce mot n'est pas reconnu!</error-text>
-						</error-box>
-					{/if}
 					{#if inputLetters != null}
 						{#if ri == rows.length}
 							{#each arrayOf5 as _, li}
@@ -357,6 +352,11 @@
 								<letter-box />
 							{/each}
 						{/if}
+					{/if}
+					{#if ri == rows.length && inError} 
+						<error-box out:fade>
+							<error-text>Mot inconnu!</error-text>
+						</error-box>
 					{/if}
 				</row>
 			{/each}
@@ -416,7 +416,7 @@
 		float: left;
 		position: absolute;
 		left: 50%;
-		margin-top: 10px;
+		margin-top: min(2vw, 10px);
 	}
 
 	error-text {
@@ -425,8 +425,10 @@
 		left: -50%;
 		background: white;
 		color: black;
-		padding: 10px;
-		border-radius: 10px;
+		padding: min(3vw, 10px);
+		border-radius: min(3vw, 10px);
+		font-size: min(5vw, 1em);
+		text-align: center;
 	}
 
 	keyboard {
@@ -511,7 +513,7 @@
 	}
 
 	letter {
-		font-size: 2em;
+		font-size: min(10vw, 2em);
 		font-weight: bold;
 		text-transform: capitalize;
 	}
