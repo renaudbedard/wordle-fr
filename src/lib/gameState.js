@@ -15,7 +15,7 @@ if (browser) {
     window.localStorage.setItem('lastPlayedDate', storedDate.toISOString());
     window.localStorage.setItem('inputState', null);
     window.localStorage.setItem('rowState', null);
-    window.localStorage.setItem('gameState', "in-progress");
+    window.localStorage.setItem('progressState', "playing");
   }
 }
  
@@ -31,5 +31,5 @@ rowState.subscribe((value) => { if (browser) localStorage.setItem('rowState', JS
 export const layoutState = writable(browser ? localStorage.getItem('layout') ?? 'qwerty' : 'qwerty');
 layoutState.subscribe((value) => { if (browser) localStorage.setItem('layout', value)});
 
-export const gameState = writable(browser ? localStorage.getItem('gameState') ?? "in-progress" : "in-progress");
-gameState.subscribe((value) => { if (browser) localStorage.setItem('gameState', value)});
+export const progressState = writable(browser ? localStorage.getItem('progressState') ?? "playing" : "playing");
+progressState.subscribe((value) => { if (browser) localStorage.setItem('progressState', value)});

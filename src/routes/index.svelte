@@ -18,7 +18,7 @@
 	*/
 	function mulberry32(a) {
 			return function() {
-				var t = a += 0x6D2B79F5;
+				let t = a += 0x6D2B79F5;
 				t = Math.imul(t ^ t >>> 15, t | 1);
 				t ^= t + Math.imul(t ^ t >>> 7, t | 61);
 				return ((t ^ t >>> 14) >>> 0) / 4294967296;
@@ -29,10 +29,10 @@
 		const response = await fetch('../mots-francais-5-lettres.json');
 		let allWords = await response.json();
 
-		var today = new Date();
-		var dateString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
-		var seed = xmur3(dateString);
-		var rand = mulberry32(seed());
+		const today = new Date();
+		const dateString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
+		const seed = xmur3(dateString);
+		const rand = mulberry32(seed());
 
 		const randomWord = allWords[Math.floor(rand() * allWords.length)];
 		return {
@@ -47,7 +47,8 @@
 <script>
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
-	import { rowState, inputState, layoutState, gameState } from '$lib/gameState';
+	import { fly } from 'svelte/transition';
+	import { rowState, inputState, layoutState, progressState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
@@ -62,6 +63,11 @@
 
 	let inError = false;
 	let lastErrorTimer;
+
+	const todayDate = new Date();
+	const tomorrow = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() + 1, 0, 0, 0, 0);
+	let timeLeft;
+	let progress;
 
 	const layouts = {
 		'qwerty': [
@@ -112,9 +118,19 @@
 
 	$: layoutState.set(layoutName);
 
-	gameState.subscribe(value => {
-		if (value == "won")
+	progressState.subscribe(value => {
+		if (value == "won") {
 			inputLetters = null;
+			function updateDate() {
+				const nowDate = new Date();
+				const now = Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), nowDate.getUTCDate(), nowDate.getUTCHours(), nowDate.getUTCMinutes(), nowDate.getUTCSeconds());
+				const secondsLeft = Math.floor((tomorrow-now)/1000);
+				timeLeft = `${Math.floor(secondsLeft/60/60%24).toString().padStart(2, '0')}:${Math.floor(secondsLeft/60%60).toString().padStart(2, '0')}:${Math.floor(secondsLeft%60).toString().padStart(2, '0')}`;
+			};
+			setInterval(updateDate, 1000);
+			updateDate();
+		}
+		progress = value;
 	});
 
 	/**
@@ -292,7 +308,7 @@
 			if (toCheck.length > 0)
 				inputLetters = [];
 			else
-				gameState.set("won");
+				progressState.set("won");
 
 			rowState.set(rows);
 			inputState.set(inputLetters);
@@ -363,6 +379,17 @@
 		</rows>
 	</game-board>
 
+	{#if progress == "won"}
+		<results in:fly="{{ y: 50, duration: 500 }}">
+			<result-text>
+				<h2>Bravo! 🎉</h2>
+				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition de '{randomWord}' sur wiktionnaire</a></p>
+				<h4>Prochain mot dans</h4>
+				<h2>{timeLeft}</h2>
+			</result-text>
+		</results>
+	{/if}	
+
 	<keyboard>
 		<locale-selector>
 			<label><input bind:group={layoutName} type='radio' value='qwerty' /> 🇨🇦</label>
@@ -429,6 +456,29 @@
 		border-radius: min(3vw, 10px);
 		font-size: min(5vw, 1em);
 		text-align: center;
+	}
+
+	results {
+		float: left;
+		position: absolute;
+		left: 50%;
+		top: 7em;
+	}
+
+	result-text {
+		float: left;
+		position: relative;
+		left: -50%;
+		top: -50%;
+		background: white;
+		color: black;
+		padding: min(3vw, 10px);
+		border-radius: min(3vw, 10px);
+		box-shadow: 5px 5px 5px black; 
+		font-size: min(5vw, 1em);
+		text-align: center;
+		vertical-align: center;
+		padding: 0 1.5em;
 	}
 
 	keyboard {
