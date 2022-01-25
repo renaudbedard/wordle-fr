@@ -444,13 +444,13 @@
 					Appuyez sur la touche Entrée, ou cliquez sur le bouton ⏎ pour confirmer un essai.
 				</p>
 				<p>
-					Les cases <span style="font-weight: bold; color: green">vertes</span> représentent la bonne lettre au bon endroit.
+					Une case <span style="font-weight: bold; color: green">verte</span> indique la bonne lettre au bon endroit.
 				</p>
 				<p>
-					Les cases <span style="font-weight: bold; color: rgb(200, 200, 0)">jaunes</span> représentent une lettre présente dans le mot, mais pas à cet endroit.
+					Une case <span style="font-weight: bold; color: rgb(200, 200, 0)">jaune</span> indique une lettre présente dans le mot, mais pas à cet endroit.
 				</p>
 				<p>
-					Les cases <span style="font-weight: bold">noires</span> représentent une lettre qui ne figure pas dans le mot.
+					Une case <span style="font-weight: bold">noire</span> indique une lettre qui ne figure pas dans le mot.
 				</p>
 				<h4>Questions/commentaires?</h4>
 				<p>
