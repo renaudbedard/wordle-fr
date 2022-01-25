@@ -13,11 +13,6 @@ Cette version se démarque principalement de ces façons :
 
 ## Comment y jouer?
 
-Pour l'instant, je n'ai pas de version publiquement accessible, car il manque encore une tonne de fonctionnalités :
+La version publique se trouve ici : https://motdle.herokuapp.com/
 
-- Statistiques
-- Générateur de visualisation en emoji de la partie
-- Décompte au prochain mot
-- Polissage de UX
-
-Si vous voulez jouer à une version française qui marche, il y a [LE MOT](https://wordle.louan.me/), [SUTOM](https://sutom.nocle.fr/) et [LeMOT](https://www.solitaire-play.com/lemot/).
+Si vous voulez jouer à une version française plus complète/fidèle, il y a [LE MOT](https://wordle.louan.me/), [SUTOM](https://sutom.nocle.fr/) et [LeMOT](https://www.solitaire-play.com/lemot/).
