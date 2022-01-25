@@ -68,6 +68,7 @@
 	const tomorrow = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() + 1, 0, 0, 0, 0);
 	let timeLeft;
 	let progress;
+	let showHelp = false;
 
 	let shareButtonText = '📋 Partager';
 
@@ -344,14 +345,20 @@
 		const baseUtc = Date.UTC(2022, 0, 24);
 		const dayCount = Math.floor((nowUtc - baseUtc) / 1000 / 60 / 60 / 24);
 		navigator.clipboard.writeText(`MOTDLE ${dayCount+1} - ${progress == "lost" ? "X" : rows.length}/6\n\n${tiles}`);
-		shareButtonText = '✔️ Copié!';
+		shareButtonText = '✅ Copié!';
+	}
+
+	function toggleHelp() {
+		showHelp = !showHelp;
 	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
 <container>
-	<header>&nbsp;</header>
+	<header>
+		<button class="help" on:click={toggleHelp}>?</button>
+	</header>
 
 	<game-board>
 		<rows>
@@ -418,6 +425,40 @@
 			</result-text>
 		</results>
 	{/if}
+	
+	{#if showHelp}
+		<shadow>&nbsp;</shadow>
+		<help in:fly="{{ y: 50, duration: 500 }}">
+			<help-content>
+				<p>
+					<strong>MOTDLE</strong> est une adaptation française de <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>. Wordle a été créé par <a href="https://www.powerlanguage.co.uk/">Josh Wardle (powerlanguage)</a>.
+				</p>
+				<h4>Comment jouer?</h4>
+				<p>
+					Tentez de découvrir le mot secret du jour en 6 essais ou moins!
+				</p>
+				<p>
+					Chaque essai doit être un mot français de 5 lettres correctement orthographié, incluant les accents.
+				</p>
+				<p>
+					Appuyez sur la touche Entrée, ou cliquez sur le bouton ⏎ pour confirmer un essai.
+				</p>
+				<p>
+					Les cases <span style="font-weight: bold; color: green">vertes</span> représentent la bonne lettre au bon endroit.
+				</p>
+				<p>
+					Les cases <span style="font-weight: bold; color: rgb(200, 200, 0)">jaunes</span> représentent une lettre présente dans le mot, mais pas à cet endroit.
+				</p>
+				<p>
+					Les cases <span style="font-weight: bold">noires</span> représentent une lettre qui ne figure pas dans le mot.
+				</p>
+				<h4>Questions/commentaires?</h4>
+				<p>
+					Contactez <a href="https://twitter.com/renaudbedard">@renaudbedard</a> sur Twitter.
+				</p>
+			</help-content>
+		</help>
+	{/if}
 
 	<keyboard>
 		<locale-selector>
@@ -456,7 +497,21 @@
 		background-color: rgba(0, 0, 0, 0.5);
 	}
 
-	header,
+	header {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
+	button.help {
+		margin-right: 5px;
+		margin-top: 5px;
+		height: 35px;
+		font-weight: bold;
+		padding-top: 5px;
+		z-index: 100;
+	}
+
 	game-board,
 	keyboard {
 		align-self: bottom;
@@ -468,7 +523,7 @@
 
 	button.share {
 		margin-top: 5px;
-		padding: 5px 15px;
+		padding: 0px 15px;
 		height: 35px;
 		font-size: 12pt;
 		background-color: #f3f2d9;
@@ -544,8 +599,32 @@
 		padding: 0 1.5em;
 	}
 
+	help {
+		float: left;
+		position: absolute;
+		left: 50%;
+		width: min(75%, 35em);
+		top: 2em;
+	}
+
+	help-content {
+		float: left;
+		position: relative;
+		left: -50%;
+		top: -50%;
+		background: white;
+		color: black;
+		padding: min(3vw, 10px);
+		border-radius: min(3vw, 10px);
+		box-shadow: 5px 5px 5px black; 
+		font-size: min(5vw, 1em);
+		text-align: center;
+		vertical-align: center;
+		padding: 0 1.5em;
+	}
+
 	keyboard {
-		padding-bottom: 5px;
+		padding-bottom: 10px;
 		gap: 2px;
 	}
 
@@ -568,7 +647,7 @@
 		justify-items: center;
 		align-items: center;
 		background-color: #555555;
-		height: min(15vw, 4.5ch);
+		height: min(15vw, 5ch);
 		font-size: min(4.5vw, 14pt);
 		border-radius: 2px;
 		padding: min(2vw, 0.75ch);
