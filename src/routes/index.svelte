@@ -224,11 +224,11 @@
 	*/
 	function handleKey(key) {
 		// DEBUG
-		if (key == 'Escape') {
+		/* if (key == 'Escape') {
 			window.localStorage.clear();
 			window.location.reload();
 			return;
-		}
+		} */
 
 		// Combinations
 		if (Object.keys(possibleCombinations).includes(key)) {
