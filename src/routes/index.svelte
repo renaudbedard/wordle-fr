@@ -364,10 +364,10 @@
 
 <container>
 	<header>
-		{#if resultsHidden}
-			<button class="help" transition:fade="{{ duration: 100 }}" on:click={toggleResults}>🥇</button>
-		{/if}
 		<button class="help" on:click={toggleHelp}>?</button>
+		{#if resultsHidden && !showHelp}
+			<button class="help" transition:fade="{{ duration: 100 }}" on:click={toggleResults}>🥇</button>
+		{/if}		
 	</header>
 
 	<game-board>
@@ -495,9 +495,10 @@
 
 	header {
 		display: flex;
-		flex-direction: row;
+		flex-direction: row-reverse;
 		align-items: flex-end;
 		justify-content: end;
+		margin-bottom: 10px;
 	}
 
 	button.help {
@@ -577,12 +578,15 @@
 		float: left;
 		position: absolute;
 		left: 50%;
+		width: min(75%, 20em);
 		top: 7em;
+		pointer-events: none;
 	}
 
 	result-text {
 		float: left;
 		position: relative;
+		width: 100%;
 		left: -50%;
 		top: -50%;
 		background: white;
@@ -594,6 +598,7 @@
 		text-align: center;
 		vertical-align: center;
 		padding: 0 1.5em;
+		pointer-events: auto;
 	}
 
 	help {
@@ -615,7 +620,7 @@
 		padding: min(3vw, 10px);
 		border-radius: min(3vw, 10px);
 		box-shadow: 5px 5px 5px black; 
-		font-size: min(4vw, 1em);
+		font-size: min(3vw, 1em);
 		text-align: center;
 		vertical-align: center;
 		padding: 0 1.5em;
@@ -649,7 +654,7 @@
 		height: min(15vw, 5ch);
 		font-size: min(4.5vw, 14pt);
 		border-radius: 2px;
-		padding: min(2vw, 0.75ch);
+		padding: min(2vw, 1ch);
 		min-width: min(7vw, 3ch);
 		border: 1px solid #888888;
 		text-transform: capitalize;
