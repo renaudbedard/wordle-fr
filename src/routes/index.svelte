@@ -574,21 +574,18 @@
 		text-align: center;
 	}
 
-	results {
-		float: left;
+	results, help {
+		display: flex;
 		position: absolute;
-		left: 50%;
-		width: min(75%, 20em);
+		width: 100%;
+		align-items: center;
+		justify-content: center;
 		top: 7em;
 		pointer-events: none;
 	}
 
 	result-text {
-		float: left;
-		position: relative;
-		width: 100%;
-		left: -50%;
-		top: -50%;
+		width: min(75%, 22em);
 		background: white;
 		color: black;
 		padding: min(3vw, 10px);
@@ -602,19 +599,11 @@
 	}
 
 	help {
-		float: left;
-		position: absolute;
-		left: 50%;
-		width: min(75%, 35em);
 		top: 2em;
-		pointer-events: none;
 	}
 
 	help-content {
-		float: left;
-		position: relative;
-		left: -50%;
-		top: -50%;
+		width: min(80%, 35em);
 		background: white;
 		color: black;
 		padding: min(3vw, 10px);
