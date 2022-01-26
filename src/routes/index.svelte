@@ -48,6 +48,7 @@
 	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
 	import { fly } from 'svelte/transition';
+	import { dev } from '$app/env';
 	import { rowState, inputState, layoutState, progressState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
@@ -69,19 +70,20 @@
 	let timeLeft;
 	let progress;
 	let showHelp = false;
+	let resultsHidden = false;
 
 	let shareButtonText = '📋 Partager';
 
 	const layouts = {
 		'qwerty': [
-			[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
-			[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u0327' ],
-			[ '\u23ce', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u232b' ]
+			[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u232b' ],
+			[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u23ce', ],
+			[ 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u0302', '\u0308', '\u0327' ]
 		],
 		'azerty': [
-			[ 'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u0302', '\u0308' ],
-			[ 'Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù' ],
-			[ '\u23ce', 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u232b' ]
+			[ 'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u232b' ],
+			[ 'Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù', '\u23ce' ],
+			[ 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u0302', '\u0308' ]
 		]
 	}
 
@@ -224,11 +226,13 @@
 	*/
 	function handleKey(key) {
 		// DEBUG
-		/* if (key == 'Escape') {
-			window.localStorage.clear();
-			window.location.reload();
-			return;
-		} */
+		if (dev) {
+			if (key == 'Escape') {
+				window.localStorage.clear();
+				window.location.reload();
+				return;
+			}
+		}
 
 		// Combinations
 		if (Object.keys(possibleCombinations).includes(key)) {
@@ -318,7 +322,7 @@
 			inputState.set(inputLetters);
 			return;
 		}
-
+		
 		if (inputLetters.length == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) 
 			return;
 
@@ -351,12 +355,18 @@
 	function toggleHelp() {
 		showHelp = !showHelp;
 	}
+	function toggleResults() {
+		resultsHidden = !resultsHidden;
+	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
 <container>
 	<header>
+		{#if resultsHidden}
+			<button class="help" transition:fade="{{ duration: 100 }}" on:click={toggleResults}>🥇</button>
+		{/if}
 		<button class="help" on:click={toggleHelp}>?</button>
 	</header>
 
@@ -400,9 +410,9 @@
 		</rows>
 	</game-board>
 
-	{#if progress == "won"}
-		<shadow>&nbsp;</shadow>
-		<results in:fly="{{ y: 50, duration: 500 }}">
+	{#if progress == "won" && !resultsHidden}
+		<shadow on:click={toggleResults} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
+		<results in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
 			<result-text>
 				<h2>Réussi en {rows.length} essai{rows.length == 1 ? '' : 's'} 🎉</h2>
 				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition de «{randomWord}» sur wiktionnaire</a></p>
@@ -413,9 +423,9 @@
 		</results>
 	{/if}	
 
-	{#if progress == "lost"}
-		<shadow>&nbsp;</shadow>
-		<results in:fly="{{ y: 50, duration: 500 }}">
+	{#if progress == "lost" && !resultsHidden}
+		<shadow on:click={toggleResults} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
+		<results in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
 			<result-text>
 				<h2>Le mot était «{randomWord}»</h2>
 				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition sur wiktionnaire</a></p>
@@ -427,35 +437,21 @@
 	{/if}
 	
 	{#if showHelp}
-		<shadow>&nbsp;</shadow>
-		<help in:fly="{{ y: 50, duration: 500 }}">
+		<shadow on:click={toggleHelp} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
+		<help in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
 			<help-content>
-				<p>
-					<strong>MOTDLE</strong> est une adaptation française de <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>. Wordle a été créé par <a href="https://www.powerlanguage.co.uk/">Josh Wardle (powerlanguage)</a>.
-				</p>
+				<p><strong>MOTDLE</strong> est une adaptation française de <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>.</p>
+				<p>Wordle a été créé par <a href="https://www.powerlanguage.co.uk/">Josh Wardle (powerlanguage)</a>.</p>
 				<h4>Comment jouer?</h4>
-				<p>
-					Tentez de découvrir le mot secret du jour en 6 essais ou moins!
-				</p>
-				<p>
-					Chaque essai doit être un mot français de 5 lettres correctement orthographié, incluant les accents.
-				</p>
-				<p>
-					Appuyez sur la touche Entrée, ou cliquez sur le bouton ⏎ pour confirmer un essai.
-				</p>
-				<p>
-					Une case <span style="font-weight: bold; color: green">verte</span> indique la bonne lettre au bon endroit.
-				</p>
-				<p>
-					Une case <span style="font-weight: bold; color: rgb(200, 200, 0)">jaune</span> indique une lettre présente dans le mot, mais pas à cet endroit.
-				</p>
-				<p>
-					Une case <span style="font-weight: bold">noire</span> indique une lettre qui ne figure pas dans le mot.
-				</p>
+				<p>Découvrez le mot secret du jour en 6 essais ou moins!</p>
+				<p>Chaque essai doit être un mot de 5 lettres correctement orthographié, incluant les accents.</p>
+				<p>Appuyez sur la touche Entrée, ou cliquez sur ⏎ pour confirmer un essai.</p>
+				<h4>Code de couleurs</h4>
+				<p>🟩 : cette lettre est dans le mot, et elle est au bon endroit.</p>
+				<p>🟨 : cette lettre est dans le mot, mais pas à cet endroit.</p>
+				<p>⬛ : cette lettre n'est pas le mot, inutile d'essayer encore.</p>
 				<h4>Questions/commentaires?</h4>
-				<p>
-					Contactez <a href="https://twitter.com/renaudbedard">@renaudbedard</a> sur Twitter.
-				</p>
+				<p>Contactez <a href="https://twitter.com/renaudbedard">@renaudbedard</a> sur Twitter.</p>
 			</help-content>
 		</help>
 	{/if}
@@ -468,7 +464,7 @@
 		{#each keyRows as row}
 			<row>
 				{#each row as key}
-					<button disabled={isKeyDisabled(key)} class="{key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+					<button disabled={isKeyDisabled(key)} class="{key.glyph == '\u23ce' && progress == 'playing' && inputLetters.length == 5 ? 'highlight' : key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
 				{/each}
 			</row>
 		{/each}
@@ -499,8 +495,9 @@
 
 	header {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: flex-end;
+		justify-content: end;
 	}
 
 	button.help {
@@ -605,6 +602,7 @@
 		left: 50%;
 		width: min(75%, 35em);
 		top: 2em;
+		pointer-events: none;
 	}
 
 	help-content {
@@ -617,10 +615,11 @@
 		padding: min(3vw, 10px);
 		border-radius: min(3vw, 10px);
 		box-shadow: 5px 5px 5px black; 
-		font-size: min(5vw, 1em);
+		font-size: min(4vw, 1em);
 		text-align: center;
 		vertical-align: center;
 		padding: 0 1.5em;
+		pointer-events: auto;
 	}
 
 	keyboard {
@@ -779,5 +778,23 @@
 
 	input[type="radio"]:checked::before {
 		transform: scale(1);
-	}	
+	}
+
+	.highlight {
+		animation-name: color;
+  	animation-duration: 1s;
+  	animation-iteration-count: infinite;
+	}
+
+	@keyframes color {
+		0% {
+			background-color: #555555;
+		}
+		50% {
+			background-color: rgb(105, 105, 105);
+		}
+		100% {
+			background-color: #555555;
+		}
+	}
 </style>
