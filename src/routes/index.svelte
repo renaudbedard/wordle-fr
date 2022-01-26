@@ -449,7 +449,7 @@
 				<h4>Code de couleurs</h4>
 				<p>🟩 : cette lettre est dans le mot, et elle est au bon endroit.</p>
 				<p>🟨 : cette lettre est dans le mot, mais pas à cet endroit.</p>
-				<p>⬛ : cette lettre n'est pas le mot, inutile d'essayer encore.</p>
+				<p>⬛ : cette lettre n'est pas dans le mot, inutile de réessayer.</p>
 				<h4>Questions/commentaires?</h4>
 				<p>Contactez <a href="https://twitter.com/renaudbedard">@renaudbedard</a> sur Twitter.</p>
 			</help-content>
