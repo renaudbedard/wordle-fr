@@ -3,16 +3,17 @@ import { writable } from 'svelte/store';
 
 let storedDate;
 if (browser) {
-  const storedDateString = localStorage.getItem('lastPlayedDate');
-  storedDate = new Date(storedDateString);
+  const lastPlayedDay = parseInt(localStorage.getItem('lastPlayedDay'));
 
   const today = new Date();
-  var todayString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
-  var lastPlayedString = '' + storedDate.getUTCFullYear() + storedDate.getUTCMonth() + storedDate.getUTCDate();
-  if (todayString != lastPlayedString) {
-    console.log('A new day!');
+  const epoch = Date.UTC(2022, 0, 26, 0, 0, 0, 0);
+  const millisSinceEpoch = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
+  const daysSinceEpoch = Math.floor(millisSinceEpoch / 1000 / 60 / 60 / 24);
+  
+  if (lastPlayedDay != daysSinceEpoch) {
+    console.log(`Now playing day ${daysSinceEpoch}`);
     storedDate = today;
-    window.localStorage.setItem('lastPlayedDate', storedDate.toISOString());
+    window.localStorage.setItem('lastPlayedDay', '' + daysSinceEpoch);
     window.localStorage.setItem('inputState', null);
     window.localStorage.setItem('rowState', null);
     window.localStorage.setItem('progressState', "playing");

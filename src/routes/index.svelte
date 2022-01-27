@@ -25,16 +25,34 @@
 			}
 	}
 
+	/**
+	 * via : https://stackoverflow.com/a/12646864
+	 * @param {any[]} array
+	 * @param {() => number} randFunction
+	 */
+	function shuffleArray(array, randFunction) {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(randFunction() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+	}
+
 	export async function load({ params, fetch, session, stuff }) {
-		const response = await fetch('../mots-francais-5-lettres.json');
+		let response = await fetch('../input-whitelist.json');
 		let allWords = await response.json();
 
-		const today = new Date();
-		const dateString = '' + today.getUTCFullYear() + today.getUTCMonth() + today.getUTCDate();
-		const seed = xmur3(dateString);
-		const rand = mulberry32(seed());
+		response = await fetch('../random-word-list.json');
+		let randomPool = await response.json();
 
-		const randomWord = allWords[Math.floor(rand() * allWords.length)];
+		const today = new Date();
+		const epoch = Date.UTC(2022, 0, 26, 0, 0, 0, 0);
+		const millisSinceEpoch = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
+		const daysSinceEpoch = Math.floor(millisSinceEpoch / 1000 / 60 / 60 / 24);
+		const seed = xmur3("The saltiest of hashes");
+		const rand = mulberry32(seed());
+		shuffleArray(randomPool, rand);
+
+		const randomWord = randomPool[daysSinceEpoch % randomPool.length];
 		return {
 			props: {
 				allUpperCaseWords: allWords.map(x => x.toUpperCase()),
@@ -181,6 +199,8 @@
 				{
 					const upperCaseGlyph = rowLetter.glyph.toUpperCase();
 					if (keyStates[upperCaseGlyph] == 'in-place')
+						continue;
+					if (keyStates[upperCaseGlyph] == 'in-word' && rowLetter.class == 'not-in-word')
 						continue;
 					keyStates[upperCaseGlyph] = rowLetter.class;
 				}
@@ -348,7 +368,8 @@
 		const nowUtc = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate());
 		const baseUtc = Date.UTC(2022, 0, 24);
 		const dayCount = Math.floor((nowUtc - baseUtc) / 1000 / 60 / 60 / 24);
-		navigator.clipboard.writeText(`MOTDLE ${dayCount+1} - ${progress == "lost" ? "X" : rows.length}/6\n\n${tiles}`);
+		const dayOffset = 2; // base 1, and +1 because of the word list changed on 2022/1/26
+		navigator.clipboard.writeText(`MOTDLE ${dayCount+dayOffset} - ${progress == "lost" ? "X" : rows.length}/6\n\n${tiles}`);
 		shareButtonText = '✅ Copié!';
 	}
 
