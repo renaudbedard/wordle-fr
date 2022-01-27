@@ -37,7 +37,15 @@
 		}
 	}
 
-	export async function load({ params, fetch, session, stuff }) {
+	export async function load({ url, params, fetch, session, stuff }) {
+		// Force HTTPS redirect
+		if (url.hostname != 'localhost' && url.protocol == 'http:') {
+			return {
+				status: 302,
+				redirect: `https://${url.host}${url.pathname}`
+			};
+		}
+
 		let response = await fetch('../input-whitelist.json');
 		let allWords = await response.json();
 
