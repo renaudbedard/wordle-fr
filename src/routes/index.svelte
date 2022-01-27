@@ -39,10 +39,13 @@
 
 	export async function load({ url, params, fetch, session, stuff }) {
 		// Force HTTPS redirect
+		console.log(`Protocol=${url.protocol}, hostname=${url.hostname}`);
 		if (url.hostname != 'localhost' && url.protocol == 'http:') {
+			const redirectURI = `https://${url.host}${url.pathname}`;
+			console.log(`Redirecting to ${redirectURI}`);
 			return {
 				status: 302,
-				redirect: `https://${url.host}${url.pathname}`
+				redirect: redirectURI
 			};
 		}
 
