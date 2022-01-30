@@ -38,7 +38,8 @@
 	}
 
 	export async function load({ url, params, fetch, session, stuff }) {
-		// Force HTTPS redirect
+		// Force HTTPS redirect (doesn't work for iOS Safari, no point in keeping it)
+		/*
 		console.log(`Protocol=${url.protocol}, hostname=${url.hostname}`);
 		if (url.hostname != 'localhost' && url.protocol == 'http:') {
 			const redirectURI = `https://${url.host}${url.pathname}`;
@@ -48,6 +49,7 @@
 				redirect: redirectURI
 			};
 		}
+		*/
 
 		let response = await fetch('../input-whitelist.json');
 		let allWords = await response.json();
