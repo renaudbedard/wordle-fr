@@ -7,6 +7,16 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>MOTDLE - Un mot par jour</title> 
 		%svelte.head%
+		
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-EKK556YE15"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+
+			gtag('config', 'G-EKK556YE15');
+		</script>		
 	</head>
 	<body>
 		<div id="svelte">%svelte.body%</div>
@@ -21,13 +31,3 @@
 		padding: 0;
 	}
 </style>
-
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EKK556YE15"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-EKK556YE15');
-</script>
