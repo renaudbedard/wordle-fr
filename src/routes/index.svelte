@@ -381,7 +381,7 @@
 		const nowUtc = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate());
 		const baseUtc = Date.UTC(2022, 0, 24);
 		const dayCount = Math.floor((nowUtc - baseUtc) / 1000 / 60 / 60 / 24);
-		const dayOffset = 2; // base 1, and +1 because of the word list changed on 2022/1/26
+		const dayOffset = 3; // base 1, and +2 because of the word list changed on 2022/1/26 and 2022/2/3
 		navigator.clipboard.writeText(`MOTDLE ${dayCount+dayOffset} - ${progress == "lost" ? "X" : rows.length}/6\n\n${tiles}`);
 		shareButtonText = '✅ Copié!';
 	}

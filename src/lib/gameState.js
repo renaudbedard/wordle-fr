@@ -6,7 +6,7 @@ if (browser) {
   const lastPlayedDay = parseInt(localStorage.getItem('lastPlayedDay'));
 
   const today = new Date();
-  const epoch = Date.UTC(2022, 0, 26, 0, 0, 0, 0);
+  const epoch = Date.UTC(2022, 0, 25, 0, 0, 0, 0);
   const millisSinceEpoch = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
   const daysSinceEpoch = Math.floor(millisSinceEpoch / 1000 / 60 / 60 / 24);
   
