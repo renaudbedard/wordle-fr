@@ -80,7 +80,7 @@
 	import { fade } from 'svelte/transition';
 	import { fly } from 'svelte/transition';
 	import { dev } from '$app/env';
-	import { rowState, inputState, layoutState, progressState } from '$lib/gameState';
+	import { rowState, inputState, layoutState, progressState, scoreHistoryState } from '$lib/gameState';
 
 	export let allUpperCaseWords;
 	export let randomWord;
@@ -95,6 +95,9 @@
 
 	let inError = false;
 	let lastErrorTimer;
+
+	let comment = null;
+	let lastCommentTimer;
 
 	const todayDate = new Date();
 	const tomorrow = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() + 1, 0, 0, 0, 0);
@@ -167,6 +170,11 @@
 			updateDate();
 		}
 		progress = value;
+	});
+
+	let scoreHistory = {};
+	scoreHistoryState.subscribe(value => {
+		scoreHistory = value;
 	});
 
 	/**
@@ -347,9 +355,39 @@
 			if (toCheck.length > 0) {
 				inputLetters = [];
 				if (rows.length == 6)
+				{
 					progressState.set("lost");
-			} else
+					scoreHistory.streak = 0;
+					scoreHistory["X"]++;
+					scoreHistoryState.set(scoreHistory);
+				}
+			} else {
 				progressState.set("won");
+
+				if (rows.length == 1) {
+					comment = "Quelle chance!";
+				} else if (rows.length == 2) {
+					comment = "Génial!";
+				} else if (rows.length == 3) {
+					comment = "Excellent!";
+				} else if (rows.length == 4) {
+					comment = "Bien joué!";
+				}
+				if (comment != null) {
+					resultsHidden = true;
+					if (lastCommentTimer) {
+						clearTimeout(lastCommentTimer);
+					}
+					lastCommentTimer = setTimeout(async () => {
+						comment = null;
+						resultsHidden = false;
+					}, 1500);
+				}
+
+				scoreHistory.streak++;
+				scoreHistory[rows.length + ""]++;
+				scoreHistoryState.set(scoreHistory);
+			}
 
 			rowState.set(rows);
 			inputState.set(inputLetters);
@@ -404,6 +442,12 @@
 		{/if}		
 	</header>
 
+	{#if comment != null}
+		<comment-box in:fly="{{ y: 25, duration: 500 }}" out:fade>
+			<comment-text>{comment}</comment-text>
+		</comment-box>
+	{/if}
+
 	<game-board>
 		<rows>
 			{#each arrayOf6 as _, ri}
@@ -451,6 +495,7 @@
 				<h2>Réussi en {rows.length} essai{rows.length == 1 ? '' : 's'} 🎉</h2>
 				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition de «{randomWord}» sur wiktionnaire</a></p>
 				<button class="share" on:click={generateShareText}>{shareButtonText}</button>
+				<h4>⭐ {scoreHistory.streak} mot{scoreHistory.streak == 1 ? '' : 's'} découvert{scoreHistory.streak == 1 ? '' : 's'} de suite</h4>
 				<h4>Prochain mot dans</h4>
 				<h2 class="timer">{timeLeft}</h2>
 			</result-text>
@@ -532,7 +577,7 @@
 		flex-direction: row-reverse;
 		align-items: flex-end;
 		justify-content: end;
-		margin-bottom: 10px;
+		margin-bottom: 17px;
 	}
 
 	button.help {
@@ -589,14 +634,14 @@
 		padding-bottom: 30px;
 	}
 
-	error-box {
+	error-box, comment-box {
 		float: left;
 		position: absolute;
 		left: 50%;
 		margin-top: min(2vw, 10px);
 	}
 
-	error-text {
+	error-text, comment-text {
 		float: left;
 		position: relative;
 		left: -50%;

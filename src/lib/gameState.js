@@ -34,3 +34,16 @@ layoutState.subscribe((value) => { if (browser) localStorage.setItem('layout', v
 
 export const progressState = writable(browser ? localStorage.getItem('progressState') ?? "playing" : "playing");
 progressState.subscribe((value) => { if (browser) localStorage.setItem('progressState', value)});
+
+const defaultScoreHistory = {
+  "streak": 0,
+  "1": 0,
+  "2": 0,
+  "3": 0,
+  "4": 0,
+  "5": 0,
+  "6": 0,
+  "X": 0,
+};
+export const scoreHistoryState = writable(browser ? JSON.parse(localStorage.getItem('scoreHistory')) ?? defaultScoreHistory : defaultScoreHistory);
+scoreHistoryState.subscribe((value) => { if (browser) localStorage.setItem('scoreHistory', JSON.stringify(value))});
