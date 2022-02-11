@@ -372,6 +372,10 @@
 					comment = "Excellent!";
 				} else if (rows.length == 4) {
 					comment = "Bien joué!";
+				} else if (rows.length == 5) {
+					comment = "Pas mal!";
+				} else if (rows.length == 6) {
+					comment = "De justesse!";
 				}
 				if (comment != null) {
 					resultsHidden = true;
