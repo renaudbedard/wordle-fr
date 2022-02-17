@@ -208,6 +208,9 @@
 	* @param {string} key
 	*/
 	function getKeyClass(key) {
+		const upperCaseRandomWord = randomWord.toUpperCase();
+		const upperCaseRandomWordLetters = [...upperCaseRandomWord];
+
 		// Include combination buffer if any
 		if (combiningBuffer.length > 0)
 			key = `${key}${combiningBuffer}`.normalize().toUpperCase();
@@ -216,14 +219,18 @@
 		let keyStates = {};
 		for (const row of rows) {
 			for (const rowLetter of row) {
-				if (rowLetter.glyph != '\0' && rowLetter.glyph.length == 1)
-				{
+				if (rowLetter.glyph != '\0' && rowLetter.glyph.length == 1) {
 					const upperCaseGlyph = rowLetter.glyph.toUpperCase();
 					if (keyStates[upperCaseGlyph] == 'in-place')
 						continue;
 					if (keyStates[upperCaseGlyph] == 'in-word' && rowLetter.class == 'not-in-word')
 						continue;
 					keyStates[upperCaseGlyph] = rowLetter.class;
+				}
+
+				if (rowLetter.glyph != rowLetter.attemptedGlyph && rowLetter.attemptedGlyph != null && rowLetter.attemptedGlyph != '\0' && rowLetter.attemptedGlyph.length == 1) {
+					const upperCaseGlyph = rowLetter.attemptedGlyph.toUpperCase();
+					keyStates[upperCaseGlyph] = upperCaseRandomWordLetters.includes(upperCaseGlyph) ? 'in-word' : 'not-in-word';
 				}
 			}
 		}
@@ -320,7 +327,7 @@
 			// take care of matches first
 			for (let i=0; i<5; i++) {
 				const normalizedInputLetter = neutralizeAccents(inputUpperCaseWord[i]);
-				const rowLetter = { glyph: inputLetters[i] };
+				const rowLetter = { glyph: inputLetters[i], attemptedGlyph: inputLetters[i] };
 				if (normalizedInputLetter == normalizedRandomWord[i]) {
 					rowLetter.class = 'in-place';
 					rowLetter.glyph = randomWord[i];
@@ -334,7 +341,7 @@
 			// then the rest
 			for (const i of toCheck) {
 				const normalizedInputLetter = neutralizeAccents(inputUpperCaseWord[i]);
-				const rowLetter = { glyph: inputLetters[i] };
+				const rowLetter = { glyph: inputLetters[i], attemptedGlyph: inputLetters[i] };
 				if (normalizedRandomWordLetters.includes(normalizedInputLetter)) {
 					rowLetter.class = 'in-word';
 					for (let i = 0; i < 5; i++) {
