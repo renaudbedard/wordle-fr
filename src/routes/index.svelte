@@ -68,8 +68,8 @@
 		const randomWord = randomPool[daysSinceEpoch % randomPool.length];
 		return {
 			props: {
-				allUpperCaseWords: allWords.map(x => x.toUpperCase()),
-				randomWord: randomWord
+				allWords: allWords.map(x => x.toUpperCase()),
+				randomWord: randomWord.toUpperCase()
 			}
 		};
 	}
@@ -82,7 +82,7 @@
 	import { dev } from '$app/env';
 	import { rowState, inputState, layoutState, progressState, scoreHistoryState } from '$lib/gameState';
 
-	export let allUpperCaseWords;
+	export let allWords;
 	export let randomWord;
 
 	const arrayOf5 = new Array(5);
@@ -208,8 +208,7 @@
 	* @param {string} key
 	*/
 	function getKeyClass(key) {
-		const upperCaseRandomWord = randomWord.toUpperCase();
-		const upperCaseRandomWordLetters = [...upperCaseRandomWord];
+		const randomWordLetters = [...randomWord];
 
 		// Include combination buffer if any
 		if (combiningBuffer.length > 0)
@@ -220,17 +219,15 @@
 		for (const row of rows) {
 			for (const rowLetter of row) {
 				if (rowLetter.glyph != '\0' && rowLetter.glyph.length == 1) {
-					const upperCaseGlyph = rowLetter.glyph.toUpperCase();
-					if (keyStates[upperCaseGlyph] == 'in-place')
+					if (keyStates[rowLetter.glyph] == 'in-place')
 						continue;
-					if (keyStates[upperCaseGlyph] == 'in-word' && rowLetter.class == 'not-in-word')
+					if (keyStates[rowLetter.glyph] == 'in-word' && rowLetter.class == 'not-in-word')
 						continue;
-					keyStates[upperCaseGlyph] = rowLetter.class;
+					keyStates[rowLetter.glyph] = rowLetter.class;
 				}
 
 				if (rowLetter.glyph != rowLetter.attemptedGlyph && rowLetter.attemptedGlyph != null && rowLetter.attemptedGlyph != '\0' && rowLetter.attemptedGlyph.length == 1) {
-					const upperCaseGlyph = rowLetter.attemptedGlyph.toUpperCase();
-					keyStates[upperCaseGlyph] = upperCaseRandomWordLetters.includes(upperCaseGlyph) ? 'in-word' : 'not-in-word';
+					keyStates[rowLetter.attemptedGlyph] = randomWordLetters.includes(rowLetter.attemptedGlyph) ? 'in-word' : 'not-in-word';
 				}
 			}
 		}
@@ -241,19 +238,19 @@
 		const combinations = possibleCombinations[key];
 		if (combinations) {
 			if (combinations.every(letterToCombine => {
-				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
+				const combinedGlyph = `${letterToCombine}${key}`.normalize();
 				return keyStates[combinedGlyph] == 'not-in-word';
 			}))
 				return 'not-in-word';
 
 			if (combinations.some(letterToCombine => {
-				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
+				const combinedGlyph = `${letterToCombine}${key}`.normalize();
 				return keyStates[combinedGlyph] == 'in-word';
 			}))
 				return 'in-word';
 
 			if (combinations.some(letterToCombine => {
-				const combinedGlyph = `${letterToCombine}${key}`.normalize().toUpperCase();
+				const combinedGlyph = `${letterToCombine}${key}`.normalize();
 				return keyStates[combinedGlyph] == 'in-place';
 			}))
 				return 'in-place';
@@ -305,9 +302,9 @@
 		}
 
 		if (inputLetters.length == 5 && (key == 'Enter' || key == 'NumpadEnter' || key == '\u23ce')) {
-			const inputUpperCaseWord = inputLetters.join('').toUpperCase();
+			const inputWord = inputLetters.join('');
 
-			if (!allUpperCaseWords.includes(inputUpperCaseWord)) {
+			if (!allWords.includes(inputWord)) {
 				inError = true;
 				if (lastErrorTimer) {
 					clearTimeout(lastErrorTimer);
@@ -320,13 +317,12 @@
 
 			const mutatedRow = Array(5);
 			const toCheck = [];
-			const upperCaseRandomWord = randomWord.toUpperCase();
-			const normalizedRandomWord = neutralizeAccents(upperCaseRandomWord);
+			const normalizedRandomWord = neutralizeAccents(randomWord);
 			const normalizedRandomWordLetters = [...normalizedRandomWord];
 
 			// take care of matches first
 			for (let i=0; i<5; i++) {
-				const normalizedInputLetter = neutralizeAccents(inputUpperCaseWord[i]);
+				const normalizedInputLetter = neutralizeAccents(inputWord[i]);
 				const rowLetter = { glyph: inputLetters[i], attemptedGlyph: inputLetters[i] };
 				if (normalizedInputLetter == normalizedRandomWord[i]) {
 					rowLetter.class = 'in-place';
@@ -340,7 +336,7 @@
 
 			// then the rest
 			for (const i of toCheck) {
-				const normalizedInputLetter = neutralizeAccents(inputUpperCaseWord[i]);
+				const normalizedInputLetter = neutralizeAccents(inputWord[i]);
 				const rowLetter = { glyph: inputLetters[i], attemptedGlyph: inputLetters[i] };
 				if (normalizedRandomWordLetters.includes(normalizedInputLetter)) {
 					rowLetter.class = 'in-word';
@@ -409,11 +405,11 @@
 			return;
 
 		if (combiningBuffer.length > 0) {
-			const neutralizedKey = neutralizeAccents(key);
-			if (possibleCombinations[combiningBuffer].includes(neutralizedKey.toUpperCase()))
+			const neutralizedKey = neutralizeAccents(key).toUpperCase();
+			if (possibleCombinations[combiningBuffer].includes(neutralizedKey))
 				key = neutralizedKey;
 
-			if (!possibleCombinations[combiningBuffer].includes(key.toUpperCase()))
+			if (!possibleCombinations[combiningBuffer].includes(key))
 				return;
 
 			key = `${key}${combiningBuffer}`.normalize();
@@ -421,7 +417,7 @@
 			keyRows = keyRows;
 		}
 
-		inputLetters.push(key);
+		inputLetters.push(key.toUpperCase());
 		inputState.set(inputLetters);
 	}
 
