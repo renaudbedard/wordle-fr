@@ -81,6 +81,7 @@
 	import { fly } from 'svelte/transition';
 	import { dev } from '$app/env';
 	import { rowState, inputState, layoutState, progressState, scoreHistoryState } from '$lib/gameState';
+	import Switch from './Switch.svelte';
 
 	export let allWords;
 	export let randomWord;
@@ -91,7 +92,7 @@
 	let inputLetters = [];
 	let combiningBuffer = '';
 	let keyRows = [];
-	let layoutName = '';
+	let azertyLayout = false;
 
 	let inError = false;
 	let lastErrorTimer;
@@ -103,6 +104,7 @@
 	const tomorrow = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() + 1, 0, 0, 0, 0);
 	let timeLeft;
 	let progress;
+	let showSettings = false;
 	let showHelp = false;
 	let resultsHidden = false;
 
@@ -148,14 +150,16 @@
 	});
 
 	layoutState.subscribe(value => {
+		if (!Object.keys(layouts).includes(value))
+			value = "qwerty";
+		azertyLayout = value == "azerty";
 		const currentLayout = layouts[value];
-		layoutName = value;
 		keyRows = currentLayout.map(r => r.map(k => {
 			return { glyph: k, class: getKeyClass(k) };
 		}));
 	});
 
-	$: layoutState.set(layoutName);
+	$: layoutState.set(azertyLayout ? "azerty" : "qwerty");
 
 	progressState.subscribe(value => {
 		if (value == "won" || value == "lost") {
@@ -431,6 +435,9 @@
 		shareButtonText = '✅ Copié!';
 	}
 
+	function toggleSettings() {
+		showSettings = !showSettings;
+	}
 	function toggleHelp() {
 		showHelp = !showHelp;
 	}
@@ -443,10 +450,15 @@
 
 <container>
 	<header>
-		<button class="help" on:click={toggleHelp}>?</button>
-		{#if resultsHidden && !showHelp}
-			<button class="help" transition:fade="{{ duration: 100 }}" on:click={toggleResults}>🥇</button>
-		{/if}		
+		{#if (resultsHidden || progress == "playing") && !showHelp}
+			<button class="toolbar" on:click={toggleSettings}>⚙️</button>
+		{/if}
+		{#if (resultsHidden || progress == "playing") && !showSettings}
+			<button class="toolbar" on:click={toggleHelp}>?</button>
+		{/if}
+		{#if progress != "playing" && !showHelp && !showSettings}
+			<button class="toolbar" transition:fade="{{ duration: 100 }}" on:click={toggleResults}>🥇</button>
+		{/if}
 	</header>
 
 	{#if comment != null}
@@ -542,11 +554,19 @@
 		</help>
 	{/if}
 
+	{#if showSettings}
+		<shadow on:click={toggleSettings} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
+		<settings in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
+			<settings-content>
+				<p><strong>Disposition du clavier</strong></p>
+				<p>
+					<span class="clickable" on:click="{() => azertyLayout = false}">QWERTY</span><Switch bind:checked={azertyLayout}></Switch><span class="clickable" on:click="{() => azertyLayout = true}">AZERTY</span>
+				</p>
+			</settings-content>
+		</settings>
+	{/if}
+
 	<keyboard>
-		<locale-selector>
-			<label><input bind:group={layoutName} type='radio' value='qwerty' /> 🇨🇦</label>
-			<label><input bind:group={layoutName} type='radio' value='azerty' /> 🇫🇷</label>
-		</locale-selector>
 		{#each keyRows as row}
 			<row>
 				{#each row as key}
@@ -587,9 +607,10 @@
 		margin-bottom: 17px;
 	}
 
-	button.help {
-		margin-right: 5px;
-		margin-top: 5px;
+	button.toolbar {
+		margin-left: 0;
+		margin-right: 10px;
+		margin-top: 10px;
 		height: 35px;
 		font-weight: bold;
 		padding-top: 5px;
@@ -660,7 +681,7 @@
 		text-align: center;
 	}
 
-	results, help {
+	results, help, settings {
 		display: flex;
 		position: absolute;
 		width: 100%;
@@ -688,7 +709,7 @@
 		top: 2em;
 	}
 
-	help-content {
+	help-content, settings-content {
 		width: min(80%, 35em);
 		background: white;
 		color: black;
@@ -702,6 +723,11 @@
 		pointer-events: auto;
 	}
 
+	settings-content {
+		width: min(75%, 15em);
+		font-size: 1em;
+	}
+
 	keyboard {
 		padding-bottom: 10px;
 		gap: 2px;
@@ -710,16 +736,6 @@
 	keyboard row {
 		display: flex;
 		gap: 2px;
-	}
-
-	keyboard locale-selector {
-		display: flex;
-		gap: min(10vw, 4ch);
-		margin-bottom: 1ch;
-	}
-
-	keyboard label {
-		display: flex;
 	}
 
 	button {
@@ -807,63 +823,10 @@
 		color: #000000;
 	}
 
-	input {
-		z-index: -1;
-	}
-
-	input[type='radio'] {
-		/* Add if not using autoprefixer */
-		-webkit-appearance: none;
-		appearance: none;
-		/* For iOS < 15 to remove gradient background */
-		background-color: #fff;
-		/* Not removed via appearance */
-		margin: 0;		
-		font: inherit;
-		color: currentColor;
-		width: 1em;
-		height: 1em;
-		border: 0.15em solid currentColor;
-		border-radius: 50%;
-		transform: translateX(-0.5em) translateY(0.3em);
-		display: grid;
-		place-content: center;
-	}
-
-	@supports (-moz-appearance:none) {
-		input[type='radio'] {
-			transform: translateX(-0.5em) !important;
-		}
-	}	
-
-	:root {
-		--form-control-color: #111111;
-	}
-
-	*,
-	*:before,
-	*:after {
-		box-sizing: border-box;
-	}	
-
-	input[type="radio"]::before {
-		content: "";
-		width: 0.75em;
-		height: 0.75em;
-		border-radius: 50%;
-		transform: scale(0);
-		transition: 66ms transform ease-in-out;
-		box-shadow: inset 1em 1em var(--form-control-color);
-	}	
-
-	input[type="radio"]:checked::before {
-		transform: scale(1);
-	}
-
 	.highlight {
 		animation-name: color;
-  	animation-duration: 1s;
-  	animation-iteration-count: infinite;
+  		animation-duration: 1s;
+  		animation-iteration-count: infinite;
 	}
 
 	@keyframes color {
@@ -876,5 +839,11 @@
 		100% {
 			background-color: #555555;
 		}
+	}
+
+	.clickable {
+		cursor: pointer;
+		text-decoration: underline;
+		text-decoration-style: dotted;
 	}
 </style>
