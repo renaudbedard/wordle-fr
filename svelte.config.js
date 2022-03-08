@@ -14,9 +14,9 @@ const config = {
 		target: '#svelte',
 
 		serviceWorker: {
-			register: false,
-		}		
-	},
+			register: false
+		}
+	}
 };
 
 export default config;

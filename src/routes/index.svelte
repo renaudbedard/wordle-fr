@@ -1,28 +1,29 @@
 <script context="module">
 	/**
-	* @param {string} str
-	*/
+	 * @param {string} str
+	 */
 	function xmur3(str) {
-			for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
-					h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-					h = h << 13 | h >>> 19;
-			} return function() {
-					h = Math.imul(h ^ (h >>> 16), 2246822507);
-					h = Math.imul(h ^ (h >>> 13), 3266489909);
-					return (h ^= h >>> 16) >>> 0;
-			}
+		for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+			h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+			h = (h << 13) | (h >>> 19);
+		}
+		return function () {
+			h = Math.imul(h ^ (h >>> 16), 2246822507);
+			h = Math.imul(h ^ (h >>> 13), 3266489909);
+			return (h ^= h >>> 16) >>> 0;
+		};
 	}
 
 	/**
-	* @param {number} a
-	*/
+	 * @param {number} a
+	 */
 	function mulberry32(a) {
-			return function() {
-				let t = a += 0x6D2B79F5;
-				t = Math.imul(t ^ t >>> 15, t | 1);
-				t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-				return ((t ^ t >>> 14) >>> 0) / 4294967296;
-			}
+		return function () {
+			let t = (a += 0x6d2b79f5);
+			t = Math.imul(t ^ (t >>> 15), t | 1);
+			t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
 	}
 
 	/**
@@ -37,8 +38,9 @@
 		}
 	}
 
-	export async function load({ url, params, fetch, session, stuff }) {
-		// Force HTTPS redirect (doesn't work for iOS Safari, no point in keeping it)
+	/** @type {import('@sveltejs/kit').Load} */
+	export async function load({ fetch }) {
+		// Force HTTPS redirect (doesn't work for iOS Safari, no point in keeping it)
 		/*
 		console.log(`Protocol=${url.protocol}, hostname=${url.hostname}`);
 		if (url.hostname != 'localhost' && url.protocol == 'http:') {
@@ -59,16 +61,17 @@
 
 		const today = new Date();
 		const epoch = Date.UTC(2022, 0, 26, 0, 0, 0, 0);
-		const millisSinceEpoch = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
+		const millisSinceEpoch =
+			Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
 		const daysSinceEpoch = Math.floor(millisSinceEpoch / 1000 / 60 / 60 / 24);
-		const seed = xmur3("The saltiest of hashes");
+		const seed = xmur3('The saltiest of hashes');
 		const rand = mulberry32(seed());
 		shuffleArray(randomPool, rand);
 
 		const randomWord = randomPool[daysSinceEpoch % randomPool.length];
 		return {
 			props: {
-				allWords: allWords.map(x => x.toUpperCase()),
+				allWords: allWords.map((x) => x.toUpperCase()),
 				randomWord: randomWord.toUpperCase()
 			}
 		};
@@ -76,11 +79,16 @@
 </script>
 
 <script>
-	import { each } from 'svelte/internal';
 	import { fade } from 'svelte/transition';
 	import { fly } from 'svelte/transition';
 	import { dev } from '$app/env';
-	import { rowState, inputState, layoutState, progressState, scoreHistoryState } from '$lib/gameState';
+	import {
+		rowState,
+		inputState,
+		layoutState,
+		progressState,
+		scoreHistoryState
+	} from '$lib/gameState';
 	import Switch from './Switch.svelte';
 
 	export let allWords;
@@ -101,7 +109,15 @@
 	let lastCommentTimer;
 
 	const todayDate = new Date();
-	const tomorrow = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() + 1, 0, 0, 0, 0);
+	const tomorrow = Date.UTC(
+		todayDate.getUTCFullYear(),
+		todayDate.getUTCMonth(),
+		todayDate.getUTCDate() + 1,
+		0,
+		0,
+		0,
+		0
+	);
 	let timeLeft;
 	let progress;
 	let showSettings = false;
@@ -111,17 +127,17 @@
 	let shareButtonText = '📋 Partager';
 
 	const layouts = {
-		'qwerty': [
-			[ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u232b' ],
-			[ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u23ce', ],
-			[ 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u0302', '\u0308', '\u0327' ]
+		qwerty: [
+			['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u232b'],
+			['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\u0300', '\u23ce'],
+			['Z', 'X', 'C', 'V', 'B', 'N', 'M', 'É', '\u0302', '\u0308', '\u0327']
 		],
-		'azerty': [
-			[ 'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u232b' ],
-			[ 'Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù', '\u23ce' ],
-			[ 'W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u0302', '\u0308' ]
+		azerty: [
+			['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '\u232b'],
+			['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù', '\u23ce'],
+			['W', 'X', 'C', 'V', 'B', 'N', 'É', 'È', 'Ç', 'À', '\u0302', '\u0308']
 		]
-	}
+	};
 
 	const possibleCombinations = {
 		'\u0327': ['C'],
@@ -132,44 +148,61 @@
 
 	const controlKeys = ['\u23ce', '\u232b'];
 
-	rowState.subscribe(value => {
-		rows = value; 
+	rowState.subscribe((value) => {
+		rows = value;
 		keyRows = keyRows;
 	});
 
 	$: {
-		keyRows.map(r => r.map(k => {
-			k.class = getKeyClass(k.glyph);
-			return k;
-		}));
+		keyRows.map((r) =>
+			r.map((k) => {
+				k.class = getKeyClass(k.glyph);
+				return k;
+			})
+		);
 		keyRows = keyRows;
-	};
-	
-	inputState.subscribe(value => {
-		inputLetters = value == null ? null : value.filter(x => x != '/0');
+	}
+
+	inputState.subscribe((value) => {
+		inputLetters = value == null ? null : value.filter((x) => x != '/0');
 	});
 
-	layoutState.subscribe(value => {
-		if (!Object.keys(layouts).includes(value))
-			value = "qwerty";
-		azertyLayout = value == "azerty";
+	layoutState.subscribe((value) => {
+		if (!Object.keys(layouts).includes(value)) value = 'qwerty';
+		azertyLayout = value == 'azerty';
 		const currentLayout = layouts[value];
-		keyRows = currentLayout.map(r => r.map(k => {
-			return { glyph: k, class: getKeyClass(k) };
-		}));
+		keyRows = currentLayout.map((r) =>
+			r.map((k) => {
+				return { glyph: k, class: getKeyClass(k) };
+			})
+		);
 	});
 
-	$: layoutState.set(azertyLayout ? "azerty" : "qwerty");
+	$: layoutState.set(azertyLayout ? 'azerty' : 'qwerty');
 
-	progressState.subscribe(value => {
-		if (value == "won" || value == "lost") {
+	function updateDate() {
+		const nowDate = new Date();
+		const now = Date.UTC(
+			nowDate.getUTCFullYear(),
+			nowDate.getUTCMonth(),
+			nowDate.getUTCDate(),
+			nowDate.getUTCHours(),
+			nowDate.getUTCMinutes(),
+			nowDate.getUTCSeconds()
+		);
+		const secondsLeft = Math.floor((tomorrow - now) / 1000);
+		timeLeft = `${Math.floor((secondsLeft / 60 / 60) % 24)
+			.toString()
+			.padStart(2, '0')}:${Math.floor((secondsLeft / 60) % 60)
+			.toString()
+			.padStart(2, '0')}:${Math.floor(secondsLeft % 60)
+			.toString()
+			.padStart(2, '0')}`;
+	}
+
+	progressState.subscribe((value) => {
+		if (value == 'won' || value == 'lost') {
 			inputLetters = null;
-			function updateDate() {
-				const nowDate = new Date();
-				const now = Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), nowDate.getUTCDate(), nowDate.getUTCHours(), nowDate.getUTCMinutes(), nowDate.getUTCSeconds());
-				const secondsLeft = Math.floor((tomorrow-now)/1000);
-				timeLeft = `${Math.floor(secondsLeft/60/60%24).toString().padStart(2, '0')}:${Math.floor(secondsLeft/60%60).toString().padStart(2, '0')}:${Math.floor(secondsLeft%60).toString().padStart(2, '0')}`;
-			};
 			setInterval(updateDate, 1000);
 			updateDate();
 		}
@@ -177,24 +210,23 @@
 	});
 
 	let scoreHistory = {};
-	scoreHistoryState.subscribe(value => {
+	scoreHistoryState.subscribe((value) => {
 		scoreHistory = value;
 	});
 
 	/**
-	* @param {KeyboardEvent} event
-	*/
+	 * @param {KeyboardEvent} event
+	 */
 	function handleKeydown(event) {
 		if (event.ctrlKey || event.metaKey) return;
 		if (event.key == 'Dead' && event.code == 'BracketLeft')
 			handleKey(event.shiftKey ? '\u0308' : '\u0302');
-		else
-			handleKey(event.key);
+		else handleKey(event.key);
 	}
-	
+
 	/**
-	* @param {MouseEvent} evt
-	*/
+	 * @param {MouseEvent} evt
+	 */
 	function handleClick(evt) {
 		if (evt.target instanceof Element) {
 			handleKey(evt.target.id.substring(4)); // skip "key_" prefix
@@ -202,77 +234,101 @@
 	}
 
 	/**
-	* @param {string} string
-	*/
+	 * @param {string} string
+	 */
 	function neutralizeAccents(string) {
-		return string.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+		return string.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	}
 
 	/**
-	* @param {string} key
-	*/
+	 * @param {string} key
+	 */
 	function getKeyClass(key) {
 		const randomWordLetters = [...randomWord];
 
 		// Include combination buffer if any
-		if (combiningBuffer.length > 0)
-			key = `${key}${combiningBuffer}`.normalize().toUpperCase();
+		if (combiningBuffer.length > 0) key = `${key}${combiningBuffer}`.normalize().toUpperCase();
 
-		// Collate all attempted letters and their class
+		// Collate all attempted letters and their class
 		let keyStates = {};
 		for (const row of rows) {
 			for (const rowLetter of row) {
 				if (rowLetter.glyph != '\0' && rowLetter.glyph.length == 1) {
-					if (keyStates[rowLetter.glyph] == 'in-place')
-						continue;
-					if (keyStates[rowLetter.glyph] == 'in-word' && rowLetter.class == 'not-in-word')
-						continue;
+					if (keyStates[rowLetter.glyph] == 'in-place') continue;
+					if (keyStates[rowLetter.glyph] == 'in-word' && rowLetter.class == 'not-in-word') continue;
 					keyStates[rowLetter.glyph] = rowLetter.class;
+
+					if (rowLetter.class == 'not-in-word') {
+						// Try to kill all possible combinations as well
+						for (const combination of Object.keys(possibleCombinations)) {
+							if (possibleCombinations[combination].includes(rowLetter.glyph)) {
+								const combinedGlyph = `${rowLetter.glyph}${combination}`.normalize();
+								keyStates[combinedGlyph] = 'not-in-word';
+							}
+						}
+					}
 				}
 
-				if (rowLetter.glyph != rowLetter.attemptedGlyph && rowLetter.attemptedGlyph != null && rowLetter.attemptedGlyph != '\0' && rowLetter.attemptedGlyph.length == 1) {
-					keyStates[rowLetter.attemptedGlyph] = randomWordLetters.includes(rowLetter.attemptedGlyph) ? 'in-word' : 'not-in-word';
+				if (
+					rowLetter.glyph != rowLetter.attemptedGlyph &&
+					rowLetter.attemptedGlyph != null &&
+					rowLetter.attemptedGlyph != '\0' &&
+					rowLetter.attemptedGlyph.length == 1
+				) {
+					keyStates[rowLetter.attemptedGlyph] = randomWordLetters.includes(rowLetter.attemptedGlyph)
+						? 'in-word'
+						: 'not-in-word';
 				}
 			}
 		}
 
-		if (Object.keys(keyStates).includes(key))
-			return keyStates[key];
+		if (Object.keys(keyStates).includes(key)) return keyStates[key];
 
 		const combinations = possibleCombinations[key];
 		if (combinations) {
-			if (combinations.every(letterToCombine => {
-				const combinedGlyph = `${letterToCombine}${key}`.normalize();
-				return keyStates[combinedGlyph] == 'not-in-word';
-			}))
+			if (
+				combinations.every((letterToCombine) => {
+					const combinedGlyph = `${letterToCombine}${key}`.normalize();
+					return keyStates[combinedGlyph] == 'not-in-word';
+				})
+			)
 				return 'not-in-word';
 
-			if (combinations.some(letterToCombine => {
-				const combinedGlyph = `${letterToCombine}${key}`.normalize();
-				return keyStates[combinedGlyph] == 'in-word';
-			}))
+			if (
+				combinations.some((letterToCombine) => {
+					const combinedGlyph = `${letterToCombine}${key}`.normalize();
+					return keyStates[combinedGlyph] == 'in-word';
+				})
+			)
 				return 'in-word';
 
-			if (combinations.some(letterToCombine => {
-				const combinedGlyph = `${letterToCombine}${key}`.normalize();
-				return keyStates[combinedGlyph] == 'in-place';
-			}))
+			if (
+				combinations.some((letterToCombine) => {
+					const combinedGlyph = `${letterToCombine}${key}`.normalize();
+					return keyStates[combinedGlyph] == 'in-place';
+				})
+			)
 				return 'in-place';
 		}
 
 		return null;
-	}	
-
-	/**
-	* @param {{ class: string; glyph: string; }} key
-	*/
-	function isKeyDisabled(key) {
-		return combiningBuffer.length > 0 && !possibleCombinations[combiningBuffer].includes(key.glyph) && !controlKeys.includes(key.glyph) && key.glyph != combiningBuffer;
 	}
 
 	/**
-	* @param {string} key
-	*/
+	 * @param {{ class: string; glyph: string; }} key
+	 */
+	function isKeyDisabled(key) {
+		return (
+			combiningBuffer.length > 0 &&
+			!possibleCombinations[combiningBuffer].includes(key.glyph) &&
+			!controlKeys.includes(key.glyph) &&
+			key.glyph != combiningBuffer
+		);
+	}
+
+	/**
+	 * @param {string} key
+	 */
 	function handleKey(key) {
 		// DEBUG
 		if (dev) {
@@ -296,8 +352,7 @@
 		}
 
 		// Already done!
-		if (rows.length == 6 || inputLetters == null) 
-			return;
+		if (rows.length == 6 || inputLetters == null) return;
 
 		if ((key == 'Backspace' || key == 'Delete' || key == '\u232b') && inputLetters.length != 0) {
 			inputLetters.pop();
@@ -325,7 +380,7 @@
 			const normalizedRandomWordLetters = [...normalizedRandomWord];
 
 			// take care of matches first
-			for (let i=0; i<5; i++) {
+			for (let i = 0; i < 5; i++) {
 				const normalizedInputLetter = neutralizeAccents(inputWord[i]);
 				const rowLetter = { glyph: inputLetters[i], attemptedGlyph: inputLetters[i] };
 				if (normalizedInputLetter == normalizedRandomWord[i]) {
@@ -361,28 +416,27 @@
 
 			if (toCheck.length > 0) {
 				inputLetters = [];
-				if (rows.length == 6)
-				{
-					progressState.set("lost");
+				if (rows.length == 6) {
+					progressState.set('lost');
 					scoreHistory.streak = 0;
-					scoreHistory["X"]++;
+					scoreHistory['X']++;
 					scoreHistoryState.set(scoreHistory);
 				}
 			} else {
-				progressState.set("won");
+				progressState.set('won');
 
 				if (rows.length == 1) {
-					comment = "Quelle chance!";
+					comment = 'Quelle chance!';
 				} else if (rows.length == 2) {
-					comment = "Génial!";
+					comment = 'Génial!';
 				} else if (rows.length == 3) {
-					comment = "Excellent!";
+					comment = 'Excellent!';
 				} else if (rows.length == 4) {
-					comment = "Bien joué!";
+					comment = 'Bien joué!';
 				} else if (rows.length == 5) {
-					comment = "Pas mal!";
+					comment = 'Pas mal!';
 				} else if (rows.length == 6) {
-					comment = "De justesse!";
+					comment = 'De justesse!';
 				}
 				if (comment != null) {
 					resultsHidden = true;
@@ -396,7 +450,7 @@
 				}
 
 				scoreHistory.streak++;
-				scoreHistory[rows.length + ""]++;
+				scoreHistory[rows.length + '']++;
 				scoreHistoryState.set(scoreHistory);
 			}
 
@@ -404,17 +458,14 @@
 			inputState.set(inputLetters);
 			return;
 		}
-		
-		if (inputLetters.length == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) 
-			return;
+
+		if (inputLetters.length == 5 || !RegExp(/^\p{L}{1}$/, 'u').test(key)) return;
 
 		if (combiningBuffer.length > 0) {
 			const neutralizedKey = neutralizeAccents(key).toUpperCase();
-			if (possibleCombinations[combiningBuffer].includes(neutralizedKey))
-				key = neutralizedKey;
+			if (possibleCombinations[combiningBuffer].includes(neutralizedKey)) key = neutralizedKey;
 
-			if (!possibleCombinations[combiningBuffer].includes(key))
-				return;
+			if (!possibleCombinations[combiningBuffer].includes(key)) return;
 
 			key = `${key}${combiningBuffer}`.normalize();
 			combiningBuffer = '';
@@ -426,12 +477,27 @@
 	}
 
 	function generateShareText() {
-		const tiles = rows.map(row => row.map(letter => letter.class == 'in-word' ? '🟨' : letter.class == 'in-place' ? '🟩' : '⬛').join('')).join('\n');
-		const nowUtc = Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate());
+		const tiles = rows
+			.map((row) =>
+				row
+					.map((letter) =>
+						letter.class == 'in-word' ? '🟨' : letter.class == 'in-place' ? '🟩' : '⬛'
+					)
+					.join('')
+			)
+			.join('\n');
+		const nowUtc = Date.UTC(
+			todayDate.getUTCFullYear(),
+			todayDate.getUTCMonth(),
+			todayDate.getUTCDate()
+		);
 		const baseUtc = Date.UTC(2022, 0, 24);
 		const dayCount = Math.floor((nowUtc - baseUtc) / 1000 / 60 / 60 / 24);
-		const dayOffset = 3; // base 1, and +2 because of the word list changed on 2022/1/26 and 2022/2/3
-		navigator.clipboard.writeText(`MOTDLE ${dayCount+dayOffset} - ${progress == "lost" ? "X" : rows.length}/6\n\n${tiles}`);
+		// base 1, and +2 because of the word list changed on 2022/1/26 and 2022/2/3
+		const dayOffset = 3;
+		navigator.clipboard.writeText(
+			`MOTDLE ${dayCount + dayOffset} - ${progress == 'lost' ? 'X' : rows.length}/6\n\n${tiles}`
+		);
 		shareButtonText = '✅ Copié!';
 	}
 
@@ -450,19 +516,21 @@
 
 <container>
 	<header>
-		{#if (resultsHidden || progress == "playing") && !showHelp}
+		{#if (resultsHidden || progress == 'playing') && !showHelp}
 			<button class="toolbar" on:click={toggleSettings}>⚙️</button>
 		{/if}
-		{#if (resultsHidden || progress == "playing") && !showSettings}
+		{#if (resultsHidden || progress == 'playing') && !showSettings}
 			<button class="toolbar" on:click={toggleHelp}>?</button>
 		{/if}
-		{#if progress != "playing" && !showHelp && !showSettings}
-			<button class="toolbar" transition:fade="{{ duration: 100 }}" on:click={toggleResults}>🥇</button>
+		{#if progress != 'playing' && !showHelp && !showSettings}
+			<button class="toolbar" transition:fade={{ duration: 100 }} on:click={toggleResults}
+				>🥇</button
+			>
 		{/if}
 	</header>
 
 	{#if comment != null}
-		<comment-box in:fly="{{ y: 25, duration: 500 }}" out:fade>
+		<comment-box in:fly={{ y: 25, duration: 500 }} out:fade>
 			<comment-text>{comment}</comment-text>
 		</comment-box>
 	{/if}
@@ -482,12 +550,12 @@
 						{#if ri == rows.length}
 							{#each arrayOf5 as _, li}
 								{#if li < inputLetters.length}
-								<letter-box class="with-letter">
-									<letter>{inputLetters[li]}</letter>
-								</letter-box>
+									<letter-box class="with-letter">
+										<letter>{inputLetters[li]}</letter>
+									</letter-box>
 								{/if}
 								{#if li >= inputLetters.length}
-								<letter-box />
+									<letter-box />
 								{/if}
 							{/each}
 						{/if}
@@ -497,7 +565,7 @@
 							{/each}
 						{/if}
 					{/if}
-					{#if ri == rows.length && inError} 
+					{#if ri == rows.length && inError}
 						<error-box out:fade>
 							<error-text>Mot inconnu!</error-text>
 						</error-box>
@@ -507,42 +575,65 @@
 		</rows>
 	</game-board>
 
-	{#if progress == "won" && !resultsHidden}
-		<shadow on:click={toggleResults} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
-		<results in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
+	{#if progress == 'won' && !resultsHidden}
+		<shadow on:click={toggleResults} transition:fade={{ duration: 200 }}>&nbsp;</shadow>
+		<results in:fly={{ y: 50, duration: 500 }} out:fly={{ duration: 200 }}>
 			<result-text>
 				<h2>Réussi en {rows.length} essai{rows.length == 1 ? '' : 's'} 🎉</h2>
-				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition de «{randomWord}» sur wiktionnaire</a></p>
+				<p>
+					<a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}"
+						>Définition de «{randomWord}» sur wiktionnaire</a
+					>
+				</p>
 				<button class="share" on:click={generateShareText}>{shareButtonText}</button>
-				<h4>⭐ {scoreHistory.streak} mot{scoreHistory.streak == 1 ? '' : 's'} découvert{scoreHistory.streak == 1 ? '' : 's'} de suite</h4>
+				<h4>
+					⭐ {scoreHistory.streak} mot{scoreHistory.streak == 1 ? '' : 's'} découvert{scoreHistory.streak ==
+					1
+						? ''
+						: 's'} de suite
+				</h4>
 				<h4>Prochain mot dans</h4>
 				<h2 class="timer">{timeLeft}</h2>
 			</result-text>
 		</results>
-	{/if}	
+	{/if}
 
-	{#if progress == "lost" && !resultsHidden}
-		<shadow on:click={toggleResults} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
-		<results in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
+	{#if progress == 'lost' && !resultsHidden}
+		<shadow on:click={toggleResults} transition:fade={{ duration: 200 }}>&nbsp;</shadow>
+		<results in:fly={{ y: 50, duration: 500 }} out:fly={{ duration: 200 }}>
 			<result-text>
 				<h2>Le mot était «{randomWord}»</h2>
-				<p><a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}">Définition sur wiktionnaire</a></p>
+				<p>
+					<a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}"
+						>Définition sur wiktionnaire</a
+					>
+				</p>
 				<button class="share" on:click={generateShareText}>{shareButtonText}</button>
 				<h4>Prochain mot dans</h4>
 				<h2 class="timer">{timeLeft}</h2>
 			</result-text>
 		</results>
 	{/if}
-	
+
 	{#if showHelp}
-		<shadow on:click={toggleHelp} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
-		<help in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
+		<shadow on:click={toggleHelp} transition:fade={{ duration: 200 }}>&nbsp;</shadow>
+		<help in:fly={{ y: 50, duration: 500 }} out:fly={{ duration: 200 }}>
 			<help-content>
-				<p><strong>MOTDLE</strong> est une adaptation française de <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>.</p>
-				<p>Wordle a été créé par <a href="https://www.powerlanguage.co.uk/">Josh Wardle (powerlanguage)</a>.</p>
+				<p>
+					<strong>MOTDLE</strong> est une adaptation française de
+					<a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>.
+				</p>
+				<p>
+					Wordle a été créé par <a href="https://www.powerlanguage.co.uk/"
+						>Josh Wardle (powerlanguage)</a
+					>.
+				</p>
 				<h4>Comment jouer?</h4>
 				<p>Découvrez le mot secret du jour en 6 essais ou moins!</p>
-				<p>Chaque essai doit être un mot de 5 lettres correctement orthographié, incluant les accents.</p>
+				<p>
+					Chaque essai doit être un mot de 5 lettres correctement orthographié, incluant les
+					accents.
+				</p>
 				<p>Appuyez sur la touche Entrée, ou cliquez sur ⏎ pour confirmer un essai.</p>
 				<h4>Code de couleurs</h4>
 				<p>🟩 : cette lettre est dans le mot, et elle est au bon endroit.</p>
@@ -555,12 +646,14 @@
 	{/if}
 
 	{#if showSettings}
-		<shadow on:click={toggleSettings} transition:fade="{{ duration: 200 }}">&nbsp;</shadow>
-		<settings in:fly="{{ y: 50, duration: 500 }}" out:fly="{{ duration: 200 }}">
+		<shadow on:click={toggleSettings} transition:fade={{ duration: 200 }}>&nbsp;</shadow>
+		<settings in:fly={{ y: 50, duration: 500 }} out:fly={{ duration: 200 }}>
 			<settings-content>
 				<p><strong>Disposition du clavier</strong></p>
 				<p>
-					<span class="clickable" on:click="{() => azertyLayout = false}">QWERTY</span><Switch bind:checked={azertyLayout}></Switch><span class="clickable" on:click="{() => azertyLayout = true}">AZERTY</span>
+					<span class="clickable" on:click={() => (azertyLayout = false)}>QWERTY</span><Switch
+						bind:checked={azertyLayout}
+					/><span class="clickable" on:click={() => (azertyLayout = true)}>AZERTY</span>
 				</p>
 			</settings-content>
 		</settings>
@@ -570,11 +663,18 @@
 		{#each keyRows as row}
 			<row>
 				{#each row as key}
-					<button disabled={isKeyDisabled(key)} class="{key.glyph == '\u23ce' && progress == 'playing' && inputLetters.length == 5 ? 'highlight' : key.class}" id="key_{key.glyph}" on:click={handleClick}>{key.glyph}</button>
+					<button
+						disabled={isKeyDisabled(key)}
+						class={key.glyph == '\u23ce' && progress == 'playing' && inputLetters.length == 5
+							? 'highlight'
+							: key.class}
+						id="key_{key.glyph}"
+						on:click={handleClick}>{key.glyph}</button
+					>
 				{/each}
 			</row>
 		{/each}
-	</keyboard>	
+	</keyboard>
 </container>
 
 <style>
@@ -638,13 +738,13 @@
 		border-radius: 5px;
 	}
 	button.share:hover {
-		background-color: #eceac5; 
+		background-color: #eceac5;
 		color: black;
 	}
 	button.share:active {
 		background-color: #acab97;
 		color: rgb(58, 58, 58);
-	}	
+	}
 
 	h4 {
 		margin-bottom: 0px;
@@ -662,14 +762,16 @@
 		padding-bottom: 30px;
 	}
 
-	error-box, comment-box {
+	error-box,
+	comment-box {
 		float: left;
 		position: absolute;
 		left: 50%;
 		margin-top: min(2vw, 10px);
 	}
 
-	error-text, comment-text {
+	error-text,
+	comment-text {
 		float: left;
 		position: relative;
 		left: -50%;
@@ -681,7 +783,9 @@
 		text-align: center;
 	}
 
-	results, help, settings {
+	results,
+	help,
+	settings {
 		display: flex;
 		position: absolute;
 		width: 100%;
@@ -697,7 +801,7 @@
 		color: black;
 		padding: min(3vw, 10px);
 		border-radius: min(3vw, 10px);
-		box-shadow: 5px 5px 5px black; 
+		box-shadow: 5px 5px 5px black;
 		font-size: min(5vw, 1em);
 		text-align: center;
 		vertical-align: center;
@@ -709,13 +813,14 @@
 		top: 2em;
 	}
 
-	help-content, settings-content {
+	help-content,
+	settings-content {
 		width: min(80%, 35em);
 		background: white;
 		color: black;
 		padding: min(3vw, 10px);
 		border-radius: min(3vw, 10px);
-		box-shadow: 5px 5px 5px black; 
+		box-shadow: 5px 5px 5px black;
 		font-size: min(3vw, 1em);
 		text-align: center;
 		vertical-align: center;
@@ -756,14 +861,14 @@
 	}
 
 	button:hover {
-		background-color: #555555; 
+		background-color: #555555;
 		color: white;
 	}
 
 	button:active {
 		background-color: #000000;
 		color: #bbbbbb;
-	}	
+	}
 
 	game-board rows {
 		display: grid;
@@ -786,7 +891,9 @@
 		height: min(15vw, 7ch);
 	}
 
-	letter-box.not-in-word, letter-box.in-word, letter-box.in-place {
+	letter-box.not-in-word,
+	letter-box.in-word,
+	letter-box.in-place {
 		border: 0;
 	}
 
@@ -825,8 +932,8 @@
 
 	.highlight {
 		animation-name: color;
-  		animation-duration: 1s;
-  		animation-iteration-count: infinite;
+		animation-duration: 1s;
+		animation-iteration-count: infinite;
 	}
 
 	@keyframes color {

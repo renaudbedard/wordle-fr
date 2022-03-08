@@ -5,18 +5,20 @@
 		<meta name="description" content="" />
 		<link rel="icon" href="/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>MOTDLE - Un mot par jour</title> 
+		<title>MOTDLE - Un mot par jour</title>
 		%svelte.head%
-		
+
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-EKK556YE15"></script>
 		<script>
 			window.dataLayer = window.dataLayer || [];
-			function gtag(){dataLayer.push(arguments);}
+			function gtag() {
+				dataLayer.push(arguments);
+			}
 			gtag('js', new Date());
 
 			gtag('config', 'G-EKK556YE15');
-		</script>		
+		</script>
 	</head>
 	<body>
 		<div id="svelte">%svelte.body%</div>
@@ -24,7 +26,9 @@
 </html>
 
 <style>
-	html, body, #svelte {
+	html,
+	body,
+	#svelte {
 		height: 100%;
 		margin: 0;
 		border: 0;
