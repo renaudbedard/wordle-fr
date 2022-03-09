@@ -260,12 +260,14 @@
 
 					if (rowLetter.class == 'not-in-word') {
 						// Try to kill all possible combinations as well
+						const neutralizedGlyph = neutralizeAccents(rowLetter.glyph);
 						for (const combination of Object.keys(possibleCombinations)) {
-							if (possibleCombinations[combination].includes(rowLetter.glyph)) {
-								const combinedGlyph = `${rowLetter.glyph}${combination}`.normalize();
+							if (possibleCombinations[combination].includes(neutralizedGlyph)) {
+								const combinedGlyph = `${neutralizedGlyph}${combination}`.normalize();
 								keyStates[combinedGlyph] = 'not-in-word';
 							}
 						}
+						keyStates[neutralizedGlyph] = 'not-in-word';
 					}
 				}
 
