@@ -1,31 +1,19 @@
 import { browser } from '$app/env';
 import { writable } from 'svelte/store';
+import { getDayNumber } from '$lib/time';
 
-let storedDate;
 if (browser) {
 	const lastPlayedDay = parseInt(localStorage.getItem('lastPlayedDay'));
+	const currentDay = getDayNumber();
 
-	const today = new Date();
-	const epoch = Date.UTC(2022, 0, 25, 0, 0, 0, 0);
-	const millisSinceEpoch =
-		Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
-	const daysSinceEpoch = Math.floor(millisSinceEpoch / 1000 / 60 / 60 / 24);
-
-	if (lastPlayedDay != daysSinceEpoch) {
-		console.log(`Now playing day ${daysSinceEpoch}`);
-		storedDate = today;
-		window.localStorage.setItem('lastPlayedDay', '' + daysSinceEpoch);
+	if (lastPlayedDay != currentDay) {
+		console.log(`Now playing day ${currentDay}`);
+		window.localStorage.setItem('lastPlayedDay', '' + currentDay);
 		window.localStorage.setItem('inputState', null);
 		window.localStorage.setItem('rowState', null);
 		window.localStorage.setItem('progressState', 'playing');
 	}
 }
-
-export const lastPlayedDate = writable(browser ? storedDate : new Date());
-lastPlayedDate.subscribe((value) => {
-	if (browser)
-		window.localStorage.setItem('lastPlayedDate', value == null ? null : value.toISOString());
-});
 
 export const inputState = writable(
 	browser ? JSON.parse(localStorage.getItem('inputState')) ?? [] : []

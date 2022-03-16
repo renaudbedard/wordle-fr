@@ -1,4 +1,6 @@
 <script context="module">
+	import { getDayNumber } from '$lib/time';
+
 	/**
 	 * @param {string} str
 	 */
@@ -59,11 +61,7 @@
 		response = await fetch('../random-word-list.json');
 		let randomPool = await response.json();
 
-		const today = new Date();
-		const epoch = Date.UTC(2022, 0, 26, 0, 0, 0, 0);
-		const millisSinceEpoch =
-			Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0) - epoch;
-		const daysSinceEpoch = Math.floor(millisSinceEpoch / 1000 / 60 / 60 / 24);
+		const daysSinceEpoch = getDayNumber() - 5; // mistakes were made and now we're stuck with this offset
 		const seed = xmur3('The saltiest of hashes');
 		const rand = mulberry32(seed());
 		shuffleArray(randomPool, rand);
@@ -90,6 +88,7 @@
 		scoreHistoryState
 	} from '$lib/gameState';
 	import Switch from './Switch.svelte';
+	import { getNextRefreshDate } from '$lib/time';
 
 	export let allWords;
 	export let randomWord;
@@ -108,16 +107,6 @@
 	let comment = null;
 	let lastCommentTimer;
 
-	const todayDate = new Date();
-	const tomorrow = Date.UTC(
-		todayDate.getUTCFullYear(),
-		todayDate.getUTCMonth(),
-		todayDate.getUTCDate() + 1,
-		0,
-		0,
-		0,
-		0
-	);
 	let timeLeft;
 	let progress;
 	let showSettings = false;
@@ -190,7 +179,8 @@
 			nowDate.getUTCMinutes(),
 			nowDate.getUTCSeconds()
 		);
-		const secondsLeft = Math.floor((tomorrow - now) / 1000);
+		const nextRefresh = getNextRefreshDate();
+		const secondsLeft = Math.floor((nextRefresh - now) / 1000);
 		timeLeft = `${Math.floor((secondsLeft / 60 / 60) % 24)
 			.toString()
 			.padStart(2, '0')}:${Math.floor((secondsLeft / 60) % 60)
@@ -488,17 +478,8 @@
 					.join('')
 			)
 			.join('\n');
-		const nowUtc = Date.UTC(
-			todayDate.getUTCFullYear(),
-			todayDate.getUTCMonth(),
-			todayDate.getUTCDate()
-		);
-		const baseUtc = Date.UTC(2022, 0, 24);
-		const dayCount = Math.floor((nowUtc - baseUtc) / 1000 / 60 / 60 / 24);
-		// base 1, and +2 because of the word list changed on 2022/1/26 and 2022/2/3
-		const dayOffset = 3;
 		navigator.clipboard.writeText(
-			`MOTDLE ${dayCount + dayOffset} - ${progress == 'lost' ? 'X' : rows.length}/6\n\n${tiles}`
+			`MOTDLE ${getDayNumber()} - ${progress == 'lost' ? 'X' : rows.length}/6\n\n${tiles}`
 		);
 		shareButtonText = '✅ Copié!';
 	}
@@ -518,16 +499,18 @@
 
 <container>
 	<header>
-		{#if (resultsHidden || progress == 'playing') && !showHelp}
-			<button class="toolbar" on:click={toggleSettings}>⚙️</button>
-		{/if}
-		{#if (resultsHidden || progress == 'playing') && !showSettings}
-			<button class="toolbar" on:click={toggleHelp}>?</button>
-		{/if}
+		<banner>MOTDLE {getDayNumber()}</banner>
+		
 		{#if progress != 'playing' && !showHelp && !showSettings}
 			<button class="toolbar" transition:fade={{ duration: 100 }} on:click={toggleResults}
 				>🥇</button
 			>
+		{/if}
+		{#if (resultsHidden || progress == 'playing') && !showSettings}
+			<button class="toolbar" on:click={toggleHelp}>?</button>
+		{/if}
+		{#if (resultsHidden || progress == 'playing') && !showHelp}
+			<button class="toolbar" on:click={toggleSettings}>⚙️</button>
 		{/if}
 	</header>
 
@@ -703,10 +686,16 @@
 
 	header {
 		display: flex;
-		flex-direction: row-reverse;
-		align-items: flex-end;
-		justify-content: end;
+		align-items: center;
+		justify-content: center;
 		margin-bottom: 17px;
+	}
+
+	banner {
+		margin-right: auto;
+		margin-left: 15px;
+		color: #444;
+		font-weight: bold;
 	}
 
 	button.toolbar {
