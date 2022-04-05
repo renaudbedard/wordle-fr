@@ -566,8 +566,8 @@
 			<result-text>
 				<h2>Réussi en {rows.length} essai{rows.length == 1 ? '' : 's'} 🎉</h2>
 				<p>
-					<a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord)}"
-						>Définition de «{randomWord}» sur wiktionnaire</a
+					<a href="https://fr.wiktionary.org/wiki/{encodeURIComponent(randomWord.toLowerCase())}"
+						>Définition de «{randomWord.toLowerCase()}» sur wiktionnaire</a
 					>
 				</p>
 				<button class="share" on:click={generateShareText}>{shareButtonText}</button>
