@@ -13,8 +13,8 @@
 		"format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. ."
 	},
 	"engines": {
-		"node": "16.x",
-		"npm": "8.x"
+		"node": ">=16.x",
+		"npm": ">=8.x"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "next",

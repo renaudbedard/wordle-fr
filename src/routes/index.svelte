@@ -61,6 +61,9 @@
 		response = await fetch('../random-word-list.json');
 		let randomPool = await response.json();
 
+		// Ensure that all words from the random pool are also present in the word whitelist
+		allWords = [...new Set([...allWords, ...randomPool])];
+
 		const daysSinceEpoch = getDayNumber() - 5; // mistakes were made and now we're stuck with this offset
 		const seed = xmur3('The saltiest of hashes');
 		const rand = mulberry32(seed());
